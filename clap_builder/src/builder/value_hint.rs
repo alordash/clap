@@ -1,5 +1,4 @@
 use std::str::FromStr;
-
 /// Provide shell with hint on how to complete an argument.
 ///
 /// See [`Arg::value_hint`][crate::Arg::value_hint] to set this on an argument.
@@ -66,28 +65,28 @@ pub enum ValueHint {
     /// Email address.
     EmailAddress,
 }
-
 #[cfg(feature = "unstable-ext")]
 impl crate::builder::ArgExt for ValueHint {}
-
 impl FromStr for ValueHint {
     type Err = String;
     fn from_str(s: &str) -> Result<Self, <Self as FromStr>::Err> {
-        Ok(match &*s.to_ascii_lowercase() {
-            "unknown" => ValueHint::Unknown,
-            "other" => ValueHint::Other,
-            "anypath" => ValueHint::AnyPath,
-            "filepath" => ValueHint::FilePath,
-            "dirpath" => ValueHint::DirPath,
-            "executablepath" => ValueHint::ExecutablePath,
-            "commandname" => ValueHint::CommandName,
-            "commandstring" => ValueHint::CommandString,
-            "commandwitharguments" => ValueHint::CommandWithArguments,
-            "username" => ValueHint::Username,
-            "hostname" => ValueHint::Hostname,
-            "url" => ValueHint::Url,
-            "emailaddress" => ValueHint::EmailAddress,
-            _ => return Err(format!("unknown ValueHint: `{s}`")),
-        })
+        Ok(
+            match &*s.to_ascii_lowercase() {
+                "unknown" => ValueHint::Unknown,
+                "other" => ValueHint::Other,
+                "anypath" => ValueHint::AnyPath,
+                "filepath" => ValueHint::FilePath,
+                "dirpath" => ValueHint::DirPath,
+                "executablepath" => ValueHint::ExecutablePath,
+                "commandname" => ValueHint::CommandName,
+                "commandstring" => ValueHint::CommandString,
+                "commandwitharguments" => ValueHint::CommandWithArguments,
+                "username" => ValueHint::Username,
+                "hostname" => ValueHint::Hostname,
+                "url" => ValueHint::Url,
+                "emailaddress" => ValueHint::EmailAddress,
+                _ => return Err(format!("unknown ValueHint: `{s}`")),
+            },
+        )
     }
 }

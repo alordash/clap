@@ -1,4 +1,3 @@
-// Std
 #[cfg(feature = "env")]
 use std::env;
 #[cfg(feature = "env")]
@@ -8,8 +7,6 @@ use std::{
     fmt::{self, Display, Formatter},
     str,
 };
-
-// Internal
 use super::{ArgFlags, ArgSettings};
 use crate::ArgAction;
 use crate::INTERNAL_ERROR_MSG;
@@ -27,7 +24,7 @@ use crate::builder::ValueRange;
 use crate::builder::ext::Extension;
 use crate::builder::ext::Extensions;
 use crate::util::AnyValueId;
-
+#[cfg_attr(test, rsubstitute::mock)]
 /// The abstract representation of a command line argument. Used to set all the options and
 /// relationships that define a valid argument for the program.
 ///
@@ -74,8 +71,8 @@ pub struct Arg {
     pub(crate) r_unless_all: Vec<Id>,
     pub(crate) short: Option<char>,
     pub(crate) long: Option<Str>,
-    pub(crate) aliases: Vec<(Str, bool)>, // (name, visible)
-    pub(crate) short_aliases: Vec<(char, bool)>, // (name, visible)
+    pub(crate) aliases: Vec<(Str, bool)>,
+    pub(crate) short_aliases: Vec<(char, bool)>,
     pub(crate) disp_ord: Option<usize>,
     pub(crate) val_names: Vec<Str>,
     pub(crate) num_vals: Option<ValueRange>,
@@ -90,7 +87,7 @@ pub struct Arg {
     pub(crate) help_heading: Option<Option<Str>>,
     pub(crate) ext: Extensions,
 }
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 /// # Basic API
 impl Arg {
     /// Create a new [`Arg`] with a unique name.
@@ -122,7 +119,6 @@ impl Arg {
     pub fn new(id: impl Into<Id>) -> Self {
         Arg::default().id(id)
     }
-
     /// Set the identifier used for referencing this argument in the clap API.
     ///
     /// See [`Arg::new`] for more details.
@@ -131,7 +127,6 @@ impl Arg {
         self.id = id.into();
         self
     }
-
     /// Sets the short version of the argument without the preceding `-`.
     ///
     /// By default `V` and `h` are used by the auto-generated `version` and `help` arguments,
@@ -188,7 +183,6 @@ impl Arg {
         }
         self
     }
-
     /// Sets the long version of the argument without the preceding `--`.
     ///
     /// By default `version` and `help` are used by the auto-generated `version` and `help`
@@ -229,7 +223,6 @@ impl Arg {
         self.long = l.into_resettable().into_option();
         self
     }
-
     /// Add an alias, which functions as a hidden long flag.
     ///
     /// This is more efficient, and easier than creating multiple hidden arguments as one only
@@ -259,7 +252,6 @@ impl Arg {
         }
         self
     }
-
     /// Add an alias, which functions as a hidden short flag.
     ///
     /// This is more efficient, and easier than creating multiple hidden arguments as one only
@@ -290,7 +282,6 @@ impl Arg {
         }
         self
     }
-
     /// Add aliases, which function as hidden long flags.
     ///
     /// This is more efficient, and easier than creating multiple hidden subcommands as one only
@@ -315,11 +306,9 @@ impl Arg {
     /// ```
     #[must_use]
     pub fn aliases(mut self, names: impl IntoIterator<Item = impl Into<Str>>) -> Self {
-        self.aliases
-            .extend(names.into_iter().map(|x| (x.into(), false)));
+        self.aliases.extend(names.into_iter().map(|x| (x.into(), false)));
         self
     }
-
     /// Add aliases, which functions as a hidden short flag.
     ///
     /// This is more efficient, and easier than creating multiple hidden subcommands as one only
@@ -350,7 +339,6 @@ impl Arg {
         }
         self
     }
-
     /// Add an alias, which functions as a visible long flag.
     ///
     /// Like [`Arg::alias`], except that they are visible inside the help message.
@@ -380,7 +368,6 @@ impl Arg {
         }
         self
     }
-
     /// Add an alias, which functions as a visible short flag.
     ///
     /// Like [`Arg::short_alias`], except that they are visible inside the help message.
@@ -410,7 +397,6 @@ impl Arg {
         }
         self
     }
-
     /// Add aliases, which function as visible long flags.
     ///
     /// Like [`Arg::aliases`], except that they are visible inside the help message.
@@ -432,12 +418,13 @@ impl Arg {
     /// ```
     /// [`Command::aliases`]: Arg::aliases()
     #[must_use]
-    pub fn visible_aliases(mut self, names: impl IntoIterator<Item = impl Into<Str>>) -> Self {
-        self.aliases
-            .extend(names.into_iter().map(|n| (n.into(), true)));
+    pub fn visible_aliases(
+        mut self,
+        names: impl IntoIterator<Item = impl Into<Str>>,
+    ) -> Self {
+        self.aliases.extend(names.into_iter().map(|n| (n.into(), true)));
         self
     }
-
     /// Add aliases, which function as visible short flags.
     ///
     /// Like [`Arg::short_aliases`], except that they are visible inside the help message.
@@ -458,14 +445,16 @@ impl Arg {
     /// assert_eq!(m.get_flag("test"), true);
     /// ```
     #[must_use]
-    pub fn visible_short_aliases(mut self, names: impl IntoIterator<Item = char>) -> Self {
+    pub fn visible_short_aliases(
+        mut self,
+        names: impl IntoIterator<Item = char>,
+    ) -> Self {
         for n in names {
             debug_assert!(n != '-', "short alias name cannot be `-`");
             self.short_aliases.push((n, true));
         }
         self
     }
-
     /// Specifies the index of a positional argument **starting at** 1.
     ///
     /// <div class="warning">
@@ -540,7 +529,6 @@ impl Arg {
         self.index = idx.into_resettable().into_option();
         self
     }
-
     /// This is a "var arg" and everything that follows should be captured by it, as if the user had
     /// used a `--`.
     ///
@@ -584,7 +572,6 @@ impl Arg {
             self.unset_setting(ArgSettings::TrailingVarArg)
         }
     }
-
     /// This arg is the last, or final, positional argument (i.e. has the highest
     /// index) and is *only* able to be accessed via the `--` syntax (i.e. `$ prog args --
     /// last_arg`).
@@ -693,7 +680,6 @@ impl Arg {
             self.unset_setting(ArgSettings::Last)
         }
     }
-
     /// Specifies that the argument must be present.
     ///
     /// Required by default means it is required, when no other conflicting rules or overrides have
@@ -759,7 +745,6 @@ impl Arg {
             self.unset_setting(ArgSettings::Required)
         }
     }
-
     /// Sets an argument that is required when this one is present
     ///
     /// i.e. when using this argument, the following argument *must* be present.
@@ -830,7 +815,6 @@ impl Arg {
         }
         self
     }
-
     /// This argument must be passed alone; it conflicts with all other arguments.
     ///
     /// # Examples
@@ -873,7 +857,6 @@ impl Arg {
             self.unset_setting(ArgSettings::Exclusive)
         }
     }
-
     /// Specifies that an argument can be matched to all child [`Subcommand`]s.
     ///
     /// <div class="warning">
@@ -921,26 +904,22 @@ impl Arg {
             self.unset_setting(ArgSettings::Global)
         }
     }
-
     #[inline]
     pub(crate) fn is_set(&self, s: ArgSettings) -> bool {
         self.settings.is_set(s)
     }
-
     #[inline]
     #[must_use]
     pub(crate) fn setting(mut self, setting: ArgSettings) -> Self {
         self.settings.set(setting);
         self
     }
-
     #[inline]
     #[must_use]
     pub(crate) fn unset_setting(mut self, setting: ArgSettings) -> Self {
         self.settings.unset(setting);
         self
     }
-
     /// Extend [`Arg`] with [`ArgExt`] data
     #[cfg(feature = "unstable-ext")]
     #[allow(clippy::should_implement_trait)]
@@ -949,7 +928,7 @@ impl Arg {
         self
     }
 }
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 /// # Value Handling
 impl Arg {
     /// Specify how to react to an argument when parsing it.
@@ -987,7 +966,6 @@ impl Arg {
         self.action = action.into_resettable().into_option();
         self
     }
-
     /// Specify the typed behavior of the argument.
     ///
     /// This allows parsing and validating a value before storing it into
@@ -1045,11 +1023,13 @@ impl Arg {
     ///     .expect("required");
     /// assert_eq!(port, 3001);
     /// ```
-    pub fn value_parser(mut self, parser: impl IntoResettable<super::ValueParser>) -> Self {
+    pub fn value_parser(
+        mut self,
+        parser: impl IntoResettable<super::ValueParser>,
+    ) -> Self {
         self.value_parser = parser.into_resettable().into_option();
         self
     }
-
     /// Specifies the number of arguments parsed per occurrence
     ///
     /// For example, if you had a `-f <file>` argument where you wanted exactly 3 'files' you would
@@ -1210,7 +1190,6 @@ impl Arg {
         self.num_vals = qty.into_resettable().into_option();
         self
     }
-
     #[doc(hidden)]
     #[cfg_attr(
         feature = "deprecated",
@@ -1219,7 +1198,6 @@ impl Arg {
     pub fn number_of_values(self, qty: usize) -> Self {
         self.num_args(qty)
     }
-
     /// Placeholder for the argument's value in the help message / usage.
     ///
     /// This name is cosmetic only; the name is **not** used to access arguments.
@@ -1282,7 +1260,6 @@ impl Arg {
             self
         }
     }
-
     /// Placeholders for the argument's values in the help message / usage.
     ///
     /// These names are cosmetic only, used for help and usage strings only. The names are **not**
@@ -1348,11 +1325,13 @@ impl Arg {
     /// [`Arg::action(ArgAction::Set)`]: Arg::action()
     /// [`Arg::num_args(1..)`]: Arg::num_args()
     #[must_use]
-    pub fn value_names(mut self, names: impl IntoIterator<Item = impl Into<Str>>) -> Self {
+    pub fn value_names(
+        mut self,
+        names: impl IntoIterator<Item = impl Into<Str>>,
+    ) -> Self {
         self.val_names = names.into_iter().map(|s| s.into()).collect();
         self
     }
-
     /// Provide the shell a hint about how to complete this argument.
     ///
     /// See [`ValueHint`] for more information.
@@ -1390,7 +1369,6 @@ impl Arg {
     /// ```
     #[must_use]
     pub fn value_hint(mut self, value_hint: impl IntoResettable<ValueHint>) -> Self {
-        // HACK: we should use `Self::add` and `Self::remove` to type-check that `ArgExt` is used
         match value_hint.into_resettable().into_option() {
             Some(value_hint) => {
                 self.ext.set(value_hint);
@@ -1401,7 +1379,6 @@ impl Arg {
         }
         self
     }
-
     /// Match values against [`PossibleValuesParser`][crate::builder::PossibleValuesParser] without matching case.
     ///
     /// When other arguments are conditionally required based on the
@@ -1469,7 +1446,6 @@ impl Arg {
             self.unset_setting(ArgSettings::IgnoreCase)
         }
     }
-
     /// Allows values which start with a leading hyphen (`-`)
     ///
     /// To limit values to just numbers, see
@@ -1545,7 +1521,6 @@ impl Arg {
             self.unset_setting(ArgSettings::AllowHyphenValues)
         }
     }
-
     /// Allows negative numbers to pass as values.
     ///
     /// This is similar to [`Arg::allow_hyphen_values`] except that it only allows numbers,
@@ -1579,7 +1554,6 @@ impl Arg {
             self.unset_setting(ArgSettings::AllowNegativeNumbers)
         }
     }
-
     /// Requires that options use the `--option=val` syntax
     ///
     /// i.e. an equals between the option and associated value.
@@ -1637,7 +1611,6 @@ impl Arg {
             self.unset_setting(ArgSettings::RequireEquals)
         }
     }
-
     #[doc(hidden)]
     #[cfg_attr(
         feature = "deprecated",
@@ -1651,7 +1624,6 @@ impl Arg {
         }
         self
     }
-
     /// Allow grouping of multiple values via a delimiter.
     ///
     /// i.e. allow values (`val1,val2,val3`) to be parsed as three values (`val1`, `val2`,
@@ -1683,7 +1655,6 @@ impl Arg {
         self.val_delim = d.into_resettable().into_option();
         self
     }
-
     /// Sentinel to **stop** parsing multiple values of a given argument.
     ///
     /// By default when
@@ -1746,7 +1717,6 @@ impl Arg {
         self.terminator = term.into_resettable().into_option();
         self
     }
-
     /// Consume all following arguments.
     ///
     /// Do not parse them individually, but rather pass them in entirety.
@@ -1781,7 +1751,6 @@ impl Arg {
         }
         self.allow_hyphen_values(yes).last(yes)
     }
-
     /// Value for the argument when not present.
     ///
     /// Like with command-line values, this will be split by [`Arg::value_delimiter`].
@@ -1856,7 +1825,6 @@ impl Arg {
             self
         }
     }
-
     #[inline]
     #[must_use]
     #[doc(hidden)]
@@ -1867,7 +1835,6 @@ impl Arg {
     pub fn default_value_os(self, val: impl Into<OsStr>) -> Self {
         self.default_values([val])
     }
-
     /// Value for the argument when not present.
     ///
     /// See [`Arg::default_value`].
@@ -1875,11 +1842,13 @@ impl Arg {
     /// [`Arg::default_value`]: Arg::default_value()
     #[inline]
     #[must_use]
-    pub fn default_values(mut self, vals: impl IntoIterator<Item = impl Into<OsStr>>) -> Self {
+    pub fn default_values(
+        mut self,
+        vals: impl IntoIterator<Item = impl Into<OsStr>>,
+    ) -> Self {
         self.default_vals = vals.into_iter().map(|s| s.into()).collect();
         self
     }
-
     #[inline]
     #[must_use]
     #[doc(hidden)]
@@ -1887,10 +1856,12 @@ impl Arg {
         feature = "deprecated",
         deprecated(since = "4.0.0", note = "Replaced with `Arg::default_values`")
     )]
-    pub fn default_values_os(self, vals: impl IntoIterator<Item = impl Into<OsStr>>) -> Self {
+    pub fn default_values_os(
+        self,
+        vals: impl IntoIterator<Item = impl Into<OsStr>>,
+    ) -> Self {
         self.default_values(vals)
     }
-
     /// Value for the argument when the flag is present but no value is specified.
     ///
     /// This configuration option is often used to give the user a shortcut and allow them to
@@ -1998,7 +1969,6 @@ impl Arg {
             self
         }
     }
-
     /// Value for the argument when the flag is present but no value is specified.
     ///
     /// See [`Arg::default_missing_value`].
@@ -2010,7 +1980,6 @@ impl Arg {
     pub fn default_missing_value_os(self, val: impl Into<OsStr>) -> Self {
         self.default_missing_values_os([val])
     }
-
     /// Value for the argument when the flag is present but no value is specified.
     ///
     /// See [`Arg::default_missing_value`].
@@ -2018,10 +1987,12 @@ impl Arg {
     /// [`Arg::default_missing_value`]: Arg::default_missing_value()
     #[inline]
     #[must_use]
-    pub fn default_missing_values(self, vals: impl IntoIterator<Item = impl Into<OsStr>>) -> Self {
+    pub fn default_missing_values(
+        self,
+        vals: impl IntoIterator<Item = impl Into<OsStr>>,
+    ) -> Self {
         self.default_missing_values_os(vals)
     }
-
     /// Value for the argument when the flag is present but no value is specified.
     ///
     /// See [`Arg::default_missing_values`].
@@ -2037,7 +2008,6 @@ impl Arg {
         self.default_missing_vals = vals.into_iter().map(|s| s.into()).collect();
         self
     }
-
     /// Read from `name` environment variable when argument is not present.
     ///
     /// If it is not present in the environment, then default
@@ -2211,7 +2181,6 @@ impl Arg {
         }
         self
     }
-
     #[cfg(feature = "env")]
     #[doc(hidden)]
     #[cfg_attr(
@@ -2222,7 +2191,7 @@ impl Arg {
         self.env(name)
     }
 }
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 /// # Help
 impl Arg {
     /// Sets the description of the argument for short help (`-h`).
@@ -2279,7 +2248,6 @@ impl Arg {
         self.help = h.into_resettable().into_option();
         self
     }
-
     /// Sets the description of the argument for long help (`--help`).
     ///
     /// Typically this a more detailed (multi-line) message
@@ -2347,7 +2315,6 @@ impl Arg {
         self.long_help = h.into_resettable().into_option();
         self
     }
-
     /// Allows custom ordering of args within the help message.
     ///
     /// `Arg`s with a lower value will be displayed first in the help message.
@@ -2418,7 +2385,6 @@ impl Arg {
         self.disp_ord = ord.into_resettable().into_option();
         self
     }
-
     /// Override the `--help` section this appears in.
     ///
     /// For more on the default help heading, see
@@ -2429,7 +2395,6 @@ impl Arg {
         self.help_heading = Some(heading.into_resettable().into_option());
         self
     }
-
     /// Render the [help][Arg::help] on the line after the argument.
     ///
     /// This can be helpful for arguments with very long or complex help messages.
@@ -2488,7 +2453,6 @@ impl Arg {
             self.unset_setting(ArgSettings::NextLineHelp)
         }
     }
-
     /// Do not display the argument in help message.
     ///
     /// <div class="warning">
@@ -2536,7 +2500,6 @@ impl Arg {
             self.unset_setting(ArgSettings::Hidden)
         }
     }
-
     /// Do not display the [possible values][crate::builder::ValueParser::possible_values] in the help message.
     ///
     /// This is useful for args with many values, or ones which are explained elsewhere in the
@@ -2574,7 +2537,6 @@ impl Arg {
             self.unset_setting(ArgSettings::HidePossibleValues)
         }
     }
-
     /// Do not display the default value of the argument in the help message.
     ///
     /// This is useful when default behavior of an arg is explained elsewhere in the help text.
@@ -2610,7 +2572,6 @@ impl Arg {
             self.unset_setting(ArgSettings::HideDefaultValue)
         }
     }
-
     /// Do not display in help the environment variable name.
     ///
     /// This is useful when the variable option is explained elsewhere in the help text.
@@ -2640,7 +2601,6 @@ impl Arg {
             self.unset_setting(ArgSettings::HideEnv)
         }
     }
-
     /// Do not display in help any values inside the associated ENV variables for the argument.
     ///
     /// This is useful when ENV vars contain sensitive values.
@@ -2671,7 +2631,6 @@ impl Arg {
             self.unset_setting(ArgSettings::HideEnvValues)
         }
     }
-
     /// Hides an argument from short help (`-h`).
     ///
     /// <div class="warning">
@@ -2763,7 +2722,6 @@ impl Arg {
             self.unset_setting(ArgSettings::HiddenShortHelp)
         }
     }
-
     /// Hides an argument from long help (`--help`).
     ///
     /// <div class="warning">
@@ -2849,7 +2807,7 @@ impl Arg {
         }
     }
 }
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 /// # Advanced Argument Relations
 impl Arg {
     /// The name of the [`ArgGroup`] the argument belongs to.
@@ -2897,7 +2855,6 @@ impl Arg {
         }
         self
     }
-
     /// The names of [`ArgGroup`]'s the argument belongs to.
     ///
     /// # Examples
@@ -2940,7 +2897,6 @@ impl Arg {
         self.groups.extend(group_ids.into_iter().map(Into::into));
         self
     }
-
     /// Specifies the value of the argument if `arg` has been used at runtime.
     ///
     /// If `default` is set to `None`, `default_value` will be removed.
@@ -3067,17 +3023,14 @@ impl Arg {
         predicate: impl Into<ArgPredicate>,
         default: impl IntoResettable<OsStr>,
     ) -> Self {
-        self.default_vals_ifs.push((
-            arg_id.into(),
-            predicate.into(),
-            default
-                .into_resettable()
-                .into_option()
-                .map(|os_str| vec![os_str]),
-        ));
+        self.default_vals_ifs
+            .push((
+                arg_id.into(),
+                predicate.into(),
+                default.into_resettable().into_option().map(|os_str| vec![os_str]),
+            ));
         self
     }
-
     /// Specifies the values of the argument if `arg` has been used at runtime.
     ///
     /// See [`Arg::default_value_if`].
@@ -3113,14 +3066,14 @@ impl Arg {
         predicate: impl Into<ArgPredicate>,
         defaults: impl IntoIterator<Item = impl Into<OsStr>>,
     ) -> Self {
-        self.default_vals_ifs.push((
-            arg_id.into(),
-            predicate.into(),
-            Some(defaults.into_iter().map(|item| item.into()).collect()),
-        ));
+        self.default_vals_ifs
+            .push((
+                arg_id.into(),
+                predicate.into(),
+                Some(defaults.into_iter().map(|item| item.into()).collect()),
+            ));
         self
     }
-
     #[must_use]
     #[doc(hidden)]
     #[cfg_attr(
@@ -3135,7 +3088,6 @@ impl Arg {
     ) -> Self {
         self.default_value_if(arg_id, predicate, default)
     }
-
     /// Specifies multiple values and conditions in the same manner as [`Arg::default_value_if`].
     ///
     /// The method takes a slice of tuples in the `(arg, predicate, default)` format.
@@ -3230,11 +3182,7 @@ impl Arg {
     pub fn default_value_ifs(
         mut self,
         ifs: impl IntoIterator<
-            Item = (
-                impl Into<Id>,
-                impl Into<ArgPredicate>,
-                impl IntoResettable<OsStr>,
-            ),
+            Item = (impl Into<Id>, impl Into<ArgPredicate>, impl IntoResettable<OsStr>),
         >,
     ) -> Self {
         for (arg, predicate, default) in ifs {
@@ -3242,7 +3190,6 @@ impl Arg {
         }
         self
     }
-
     /// Specifies multiple values and conditions in the same manner as [`Arg::default_values_if`].
     ///
     /// See [`Arg::default_values_if`].
@@ -3264,7 +3211,6 @@ impl Arg {
         }
         self
     }
-
     #[must_use]
     #[doc(hidden)]
     #[cfg_attr(
@@ -3274,16 +3220,11 @@ impl Arg {
     pub fn default_value_ifs_os(
         self,
         ifs: impl IntoIterator<
-            Item = (
-                impl Into<Id>,
-                impl Into<ArgPredicate>,
-                impl IntoResettable<OsStr>,
-            ),
+            Item = (impl Into<Id>, impl Into<ArgPredicate>, impl IntoResettable<OsStr>),
         >,
     ) -> Self {
         self.default_value_ifs(ifs)
     }
-
     /// Set this arg as [required] as long as the specified argument is not present at runtime.
     ///
     /// <div class="warning">
@@ -3353,7 +3294,6 @@ impl Arg {
         }
         self
     }
-
     /// Sets this arg as [required] unless *all* of the specified arguments are present at runtime.
     ///
     /// In other words, parsing will succeed only if user either
@@ -3436,7 +3376,6 @@ impl Arg {
         self.r_unless_all.extend(names.into_iter().map(Into::into));
         self
     }
-
     /// Sets this arg as [required] unless *any* of the specified arguments are present at runtime.
     ///
     /// In other words, parsing will succeed only if user either
@@ -3521,7 +3460,6 @@ impl Arg {
         self.r_unless.extend(names.into_iter().map(Into::into));
         self
     }
-
     /// This argument is [required] only if the specified `arg` is present at runtime and its value
     /// equals `val`.
     ///
@@ -3604,11 +3542,14 @@ impl Arg {
     /// [Conflicting]: Arg::conflicts_with()
     /// [required]: Arg::required()
     #[must_use]
-    pub fn required_if_eq(mut self, arg_id: impl Into<Id>, val: impl Into<OsStr>) -> Self {
+    pub fn required_if_eq(
+        mut self,
+        arg_id: impl Into<Id>,
+        val: impl Into<OsStr>,
+    ) -> Self {
         self.r_ifs.push((arg_id.into(), val.into()));
         self
     }
-
     /// Specify this argument is [required] based on multiple conditions.
     ///
     /// The conditions are set up in a `(arg, val)` style tuple. The requirement will only become
@@ -3690,11 +3631,9 @@ impl Arg {
         mut self,
         ifs: impl IntoIterator<Item = (impl Into<Id>, impl Into<OsStr>)>,
     ) -> Self {
-        self.r_ifs
-            .extend(ifs.into_iter().map(|(id, val)| (id.into(), val.into())));
+        self.r_ifs.extend(ifs.into_iter().map(|(id, val)| (id.into(), val.into())));
         self
     }
-
     /// Specify this argument is [required] based on multiple conditions.
     ///
     /// The conditions are set up in a `(arg, val)` style tuple. The requirement will only become
@@ -3774,11 +3713,9 @@ impl Arg {
         mut self,
         ifs: impl IntoIterator<Item = (impl Into<Id>, impl Into<OsStr>)>,
     ) -> Self {
-        self.r_ifs_all
-            .extend(ifs.into_iter().map(|(id, val)| (id.into(), val.into())));
+        self.r_ifs_all.extend(ifs.into_iter().map(|(id, val)| (id.into(), val.into())));
         self
     }
-
     /// Require another argument if this arg matches the [`ArgPredicate`]
     ///
     /// This method takes `value, another_arg` pair. At runtime, clap will check
@@ -3838,11 +3775,14 @@ impl Arg {
     /// [Conflicting]: Arg::conflicts_with()
     /// [override]: Arg::overrides_with()
     #[must_use]
-    pub fn requires_if(mut self, val: impl Into<ArgPredicate>, arg_id: impl Into<Id>) -> Self {
+    pub fn requires_if(
+        mut self,
+        val: impl Into<ArgPredicate>,
+        arg_id: impl Into<Id>,
+    ) -> Self {
         self.requires.push((val.into(), arg_id.into()));
         self
     }
-
     /// Allows multiple conditional requirements.
     ///
     /// The requirement will only become valid if this arg's value matches the
@@ -3921,11 +3861,9 @@ impl Arg {
         mut self,
         ifs: impl IntoIterator<Item = (impl Into<ArgPredicate>, impl Into<Id>)>,
     ) -> Self {
-        self.requires
-            .extend(ifs.into_iter().map(|(val, arg)| (val.into(), arg.into())));
+        self.requires.extend(ifs.into_iter().map(|(val, arg)| (val.into(), arg.into())));
         self
     }
-
     #[doc(hidden)]
     #[cfg_attr(
         feature = "deprecated",
@@ -3934,7 +3872,6 @@ impl Arg {
     pub fn requires_all(self, ids: impl IntoIterator<Item = impl Into<Id>>) -> Self {
         self.requires_ifs(ids.into_iter().map(|id| (ArgPredicate::IsPresent, id)))
     }
-
     /// This argument is mutually exclusive with the specified argument.
     ///
     /// <div class="warning">
@@ -4012,7 +3949,6 @@ impl Arg {
         }
         self
     }
-
     /// This argument is mutually exclusive with the specified arguments.
     ///
     /// See [`Arg::conflicts_with`].
@@ -4072,11 +4008,13 @@ impl Arg {
     /// [`Arg::conflicts_with`]: Arg::conflicts_with()
     /// [`Arg::exclusive(true)`]: Arg::exclusive()
     #[must_use]
-    pub fn conflicts_with_all(mut self, names: impl IntoIterator<Item = impl Into<Id>>) -> Self {
+    pub fn conflicts_with_all(
+        mut self,
+        names: impl IntoIterator<Item = impl Into<Id>>,
+    ) -> Self {
         self.conflicts.extend(names.into_iter().map(Into::into));
         self
     }
-
     /// Sets an overridable argument.
     ///
     /// i.e. this argument and the following argument
@@ -4125,7 +4063,6 @@ impl Arg {
         }
         self
     }
-
     /// Sets multiple mutually overridable arguments by name.
     ///
     /// i.e. this argument and the following argument will override each other in POSIX style
@@ -4166,12 +4103,15 @@ impl Arg {
     /// assert!(!m.get_flag("flag"));
     /// ```
     #[must_use]
-    pub fn overrides_with_all(mut self, names: impl IntoIterator<Item = impl Into<Id>>) -> Self {
+    pub fn overrides_with_all(
+        mut self,
+        names: impl IntoIterator<Item = impl Into<Id>>,
+    ) -> Self {
         self.overrides.extend(names.into_iter().map(Into::into));
         self
     }
 }
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 /// # Reflection
 impl Arg {
     /// Get the name of the argument
@@ -4179,13 +4119,11 @@ impl Arg {
     pub fn get_id(&self) -> &Id {
         &self.id
     }
-
     /// Get the help specified for this argument, if any
     #[inline]
     pub fn get_help(&self) -> Option<&StyledStr> {
         self.help.as_ref()
     }
-
     /// Get the long help specified for this argument, if any
     ///
     /// # Examples
@@ -4201,28 +4139,21 @@ impl Arg {
     pub fn get_long_help(&self) -> Option<&StyledStr> {
         self.long_help.as_ref()
     }
-
     /// Get the placement within help
     #[inline]
     pub fn get_display_order(&self) -> usize {
         self.disp_ord.unwrap_or(999)
     }
-
     /// Get the help heading specified for this argument, if any
     #[inline]
     pub fn get_help_heading(&self) -> Option<&str> {
-        self.help_heading
-            .as_ref()
-            .map(|s| s.as_deref())
-            .unwrap_or_default()
+        self.help_heading.as_ref().map(|s| s.as_deref()).unwrap_or_default()
     }
-
     /// Get the short option name for this argument, if any
     #[inline]
     pub fn get_short(&self) -> Option<char> {
         self.short
     }
-
     /// Get visible short aliases for this argument, if any
     #[inline]
     pub fn get_visible_short_aliases(&self) -> Option<Vec<char>> {
@@ -4230,7 +4161,8 @@ impl Arg {
             None
         } else {
             Some(
-                self.short_aliases
+                self
+                    .short_aliases
                     .iter()
                     .filter_map(|(c, v)| if *v { Some(c) } else { None })
                     .copied()
@@ -4238,7 +4170,6 @@ impl Arg {
             )
         }
     }
-
     /// Get *all* short aliases for this argument, if any, both visible and hidden.
     #[inline]
     pub fn get_all_short_aliases(&self) -> Option<Vec<char>> {
@@ -4248,23 +4179,20 @@ impl Arg {
             Some(self.short_aliases.iter().map(|(s, _)| s).copied().collect())
         }
     }
-
     /// Get the short option name and its visible aliases, if any
     #[inline]
     pub fn get_short_and_visible_aliases(&self) -> Option<Vec<char>> {
-        let mut shorts = vec![self.short?];
+        let mut shorts = vec![self.short ?];
         if let Some(aliases) = self.get_visible_short_aliases() {
             shorts.extend(aliases);
         }
         Some(shorts)
     }
-
     /// Get the long option name for this argument, if any
     #[inline]
     pub fn get_long(&self) -> Option<&str> {
         self.long.as_deref()
     }
-
     /// Get visible aliases for this argument, if any
     #[inline]
     pub fn get_visible_aliases(&self) -> Option<Vec<&str>> {
@@ -4272,14 +4200,14 @@ impl Arg {
             None
         } else {
             Some(
-                self.aliases
+                self
+                    .aliases
                     .iter()
                     .filter_map(|(s, v)| if *v { Some(s.as_str()) } else { None })
                     .collect(),
             )
         }
     }
-
     /// Get *all* aliases for this argument, if any, both visible and hidden.
     #[inline]
     pub fn get_all_aliases(&self) -> Option<Vec<&str>> {
@@ -4289,17 +4217,15 @@ impl Arg {
             Some(self.aliases.iter().map(|(s, _)| s.as_str()).collect())
         }
     }
-
     /// Get the long option name and its visible aliases, if any
     #[inline]
     pub fn get_long_and_visible_aliases(&self) -> Option<Vec<&str>> {
-        let mut longs = vec![self.get_long()?];
+        let mut longs = vec![self.get_long() ?];
         if let Some(aliases) = self.get_visible_aliases() {
             longs.extend(aliases);
         }
         Some(longs)
     }
-
     /// Get hidden aliases for this argument, if any
     #[inline]
     pub fn get_aliases(&self) -> Option<Vec<&str>> {
@@ -4307,14 +4233,14 @@ impl Arg {
             None
         } else {
             Some(
-                self.aliases
+                self
+                    .aliases
                     .iter()
                     .filter_map(|(s, v)| if !*v { Some(s.as_str()) } else { None })
                     .collect(),
             )
         }
     }
-
     /// Get the names of possible values for this argument. Only useful for user
     /// facing applications, such as building help messages or man files
     pub fn get_possible_values(&self) -> Vec<PossibleValue> {
@@ -4327,64 +4253,54 @@ impl Arg {
                 .unwrap_or_default()
         }
     }
-
     /// Get the names of values for this argument.
     #[inline]
     pub fn get_value_names(&self) -> Option<&[Str]> {
-        if self.val_names.is_empty() {
-            None
-        } else {
-            Some(&self.val_names)
-        }
+        if self.val_names.is_empty() { None } else { Some(&self.val_names) }
     }
-
     /// Get the number of values for this argument.
     #[inline]
     pub fn get_num_args(&self) -> Option<ValueRange> {
         self.num_vals
     }
-
     #[inline]
     pub(crate) fn get_min_vals(&self) -> usize {
         self.get_num_args().expect(INTERNAL_ERROR_MSG).min_values()
     }
-
     /// Get the delimiter between multiple values
     #[inline]
     pub fn get_value_delimiter(&self) -> Option<char> {
         self.val_delim
     }
-
     /// Get the value terminator for this argument. The `value_terminator` is a value
     /// that terminates parsing of multi-valued arguments.
     #[inline]
     pub fn get_value_terminator(&self) -> Option<&Str> {
         self.terminator.as_ref()
     }
-
     /// Get the index of this argument, if any
     #[inline]
     pub fn get_index(&self) -> Option<usize> {
         self.index
     }
-
     /// Get the value hint of this argument
     pub fn get_value_hint(&self) -> ValueHint {
-        // HACK: we should use `Self::add` and `Self::remove` to type-check that `ArgExt` is used
-        self.ext.get::<ValueHint>().copied().unwrap_or_else(|| {
-            if self.is_takes_value_set() {
-                let type_id = self.get_value_parser().type_id();
-                if type_id == AnyValueId::of::<std::path::PathBuf>() {
-                    ValueHint::AnyPath
+        self.ext
+            .get::<ValueHint>()
+            .copied()
+            .unwrap_or_else(|| {
+                if self.is_takes_value_set() {
+                    let type_id = self.get_value_parser().type_id();
+                    if type_id == AnyValueId::of::<std::path::PathBuf>() {
+                        ValueHint::AnyPath
+                    } else {
+                        ValueHint::default()
+                    }
                 } else {
                     ValueHint::default()
                 }
-            } else {
-                ValueHint::default()
-            }
-        })
+            })
     }
-
     /// Get the environment variable name specified for this argument, if any
     ///
     /// # Examples
@@ -4400,7 +4316,6 @@ impl Arg {
     pub fn get_env(&self) -> Option<&std::ffi::OsStr> {
         self.env.as_ref().map(|x| x.0.as_os_str())
     }
-
     /// Get the default values specified for this argument, if any
     ///
     /// # Examples
@@ -4414,7 +4329,6 @@ impl Arg {
     pub fn get_default_values(&self) -> &[OsStr] {
         &self.default_vals
     }
-
     /// Checks whether this argument is a positional or not.
     ///
     /// # Examples
@@ -4431,38 +4345,29 @@ impl Arg {
     pub fn is_positional(&self) -> bool {
         self.get_long().is_none() && self.get_short().is_none()
     }
-
     /// Reports whether [`Arg::required`] is set
     pub fn is_required_set(&self) -> bool {
         self.is_set(ArgSettings::Required)
     }
-
     pub(crate) fn is_multiple_values_set(&self) -> bool {
         self.get_num_args().unwrap_or_default().is_multiple()
     }
-
     pub(crate) fn is_takes_value_set(&self) -> bool {
-        self.get_num_args()
-            .unwrap_or_else(|| 1.into())
-            .takes_values()
+        self.get_num_args().unwrap_or_else(|| 1.into()).takes_values()
     }
-
     /// Report whether [`Arg::allow_hyphen_values`] is set
     pub fn is_allow_hyphen_values_set(&self) -> bool {
         self.is_set(ArgSettings::AllowHyphenValues)
     }
-
     /// Report whether [`Arg::allow_negative_numbers`] is set
     pub fn is_allow_negative_numbers_set(&self) -> bool {
         self.is_set(ArgSettings::AllowNegativeNumbers)
     }
-
     /// Behavior when parsing the argument
     pub fn get_action(&self) -> &ArgAction {
         const DEFAULT: ArgAction = ArgAction::Set;
         self.action.as_ref().unwrap_or(&DEFAULT)
     }
-
     /// Configured parser for argument values
     ///
     /// # Example
@@ -4487,92 +4392,76 @@ impl Arg {
             &DEFAULT
         }
     }
-
     /// Report whether [`Arg::global`] is set
     pub fn is_global_set(&self) -> bool {
         self.is_set(ArgSettings::Global)
     }
-
     /// Report whether [`Arg::next_line_help`] is set
     pub fn is_next_line_help_set(&self) -> bool {
         self.is_set(ArgSettings::NextLineHelp)
     }
-
     /// Report whether [`Arg::hide`] is set
     pub fn is_hide_set(&self) -> bool {
         self.is_set(ArgSettings::Hidden)
     }
-
     /// Report whether [`Arg::hide_default_value`] is set
     pub fn is_hide_default_value_set(&self) -> bool {
         self.is_set(ArgSettings::HideDefaultValue)
     }
-
     /// Report whether [`Arg::hide_possible_values`] is set
     pub fn is_hide_possible_values_set(&self) -> bool {
         self.is_set(ArgSettings::HidePossibleValues)
     }
-
     /// Report whether [`Arg::hide_env`] is set
     #[cfg(feature = "env")]
     pub fn is_hide_env_set(&self) -> bool {
         self.is_set(ArgSettings::HideEnv)
     }
-
     /// Report whether [`Arg::hide_env_values`] is set
     #[cfg(feature = "env")]
     pub fn is_hide_env_values_set(&self) -> bool {
         self.is_set(ArgSettings::HideEnvValues)
     }
-
     /// Report whether [`Arg::hide_short_help`] is set
     pub fn is_hide_short_help_set(&self) -> bool {
         self.is_set(ArgSettings::HiddenShortHelp)
     }
-
     /// Report whether [`Arg::hide_long_help`] is set
     pub fn is_hide_long_help_set(&self) -> bool {
         self.is_set(ArgSettings::HiddenLongHelp)
     }
-
     /// Report whether [`Arg::require_equals`] is set
     pub fn is_require_equals_set(&self) -> bool {
         self.is_set(ArgSettings::RequireEquals)
     }
-
     /// Reports whether [`Arg::exclusive`] is set
     pub fn is_exclusive_set(&self) -> bool {
         self.is_set(ArgSettings::Exclusive)
     }
-
     /// Report whether [`Arg::trailing_var_arg`] is set
     pub fn is_trailing_var_arg_set(&self) -> bool {
         self.is_set(ArgSettings::TrailingVarArg)
     }
-
     /// Reports whether [`Arg::last`] is set
     pub fn is_last_set(&self) -> bool {
         self.is_set(ArgSettings::Last)
     }
-
     /// Reports whether [`Arg::ignore_case`] is set
     pub fn is_ignore_case_set(&self) -> bool {
         self.is_set(ArgSettings::IgnoreCase)
     }
-
     /// Access an [`ArgExt`]
     #[cfg(feature = "unstable-ext")]
     pub fn get<T: ArgExt + Extension>(&self) -> Option<&T> {
         self.ext.get::<T>()
     }
-
     /// Remove an [`ArgExt`]
     #[cfg(feature = "unstable-ext")]
     pub fn remove<T: ArgExt + Extension>(mut self) -> Option<T> {
         self.ext.remove::<T>()
     }
 }
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 /// # Internally used only
 impl Arg {
     pub(crate) fn _build(&mut self) {
@@ -4581,16 +4470,13 @@ impl Arg {
                 let action = ArgAction::SetTrue;
                 self.action = Some(action);
             } else {
-                let action =
-                    if self.is_positional() && self.num_vals.unwrap_or_default().is_unbounded() {
-                        // Allow collecting arguments interleaved with flags
-                        //
-                        // Bounded values are probably a group and the user should explicitly opt-in to
-                        // Append
-                        ArgAction::Append
-                    } else {
-                        ArgAction::Set
-                    };
+                let action = if self.is_positional()
+                    && self.num_vals.unwrap_or_default().is_unbounded()
+                {
+                    ArgAction::Append
+                } else {
+                    ArgAction::Set
+                };
                 self.action = Some(action);
             }
         }
@@ -4606,15 +4492,17 @@ impl Arg {
                 }
             }
         }
-
         if self.value_parser.is_none() {
-            if let Some(default) = self.action.as_ref().and_then(|a| a.default_value_parser()) {
+            if let Some(default) = self
+                .action
+                .as_ref()
+                .and_then(|a| a.default_value_parser())
+            {
                 self.value_parser = Some(default);
             } else {
                 self.value_parser = Some(super::ValueParser::string());
             }
         }
-
         let val_names_len = self.val_names.len();
         if val_names_len > 1 {
             self.num_vals.get_or_insert(val_names_len.into());
@@ -4623,14 +4511,11 @@ impl Arg {
             self.num_vals.get_or_insert(nargs);
         }
     }
-
-    // Used for positionals when printing
     pub(crate) fn name_no_brackets(&self) -> String {
         debug!("Arg::name_no_brackets:{}", self.get_id());
         let delim = " ";
         if !self.val_names.is_empty() {
             debug!("Arg::name_no_brackets: val_names={:#?}", self.val_names);
-
             if self.val_names.len() > 1 {
                 self.val_names
                     .iter()
@@ -4638,24 +4523,17 @@ impl Arg {
                     .collect::<Vec<_>>()
                     .join(delim)
             } else {
-                self.val_names
-                    .first()
-                    .expect(INTERNAL_ERROR_MSG)
-                    .as_str()
-                    .to_owned()
+                self.val_names.first().expect(INTERNAL_ERROR_MSG).as_str().to_owned()
             }
         } else {
             debug!("Arg::name_no_brackets: just name");
             self.get_id().as_str().to_owned()
         }
     }
-
     pub(crate) fn stylized(&self, styles: &Styles, required: Option<bool>) -> StyledStr {
         use std::fmt::Write as _;
         let literal = styles.get_literal();
-
         let mut styled = StyledStr::new();
-        // Write the name such --long or -l
         if let Some(l) = self.get_long() {
             let _ = write!(styled, "{literal}--{l}{literal:#}",);
         } else if let Some(s) = self.get_short() {
@@ -4664,13 +4542,15 @@ impl Arg {
         styled.push_styled(&self.stylize_arg_suffix(styles, required));
         styled
     }
-
-    pub(crate) fn stylize_arg_suffix(&self, styles: &Styles, required: Option<bool>) -> StyledStr {
+    pub(crate) fn stylize_arg_suffix(
+        &self,
+        styles: &Styles,
+        required: Option<bool>,
+    ) -> StyledStr {
         use std::fmt::Write as _;
         let literal = styles.get_literal();
         let placeholder = styles.get_placeholder();
         let mut styled = StyledStr::new();
-
         let mut need_closing_bracket = false;
         if self.is_takes_value_set() && !self.is_positional() {
             let is_optional_val = self.get_min_vals() == 0;
@@ -4693,22 +4573,18 @@ impl Arg {
             let required = required.unwrap_or_else(|| self.is_required_set());
             let arg_val = self.render_arg_val(required);
             let _ = write!(styled, "{placeholder}{arg_val}{placeholder:#}",);
-        } else if matches!(*self.get_action(), ArgAction::Count) {
+        } else if matches!(* self.get_action(), ArgAction::Count) {
             let _ = write!(styled, "{placeholder}...{placeholder:#}",);
         }
         if need_closing_bracket {
             let _ = write!(styled, "{placeholder}]{placeholder:#}",);
         }
-
         styled
     }
-
     /// Write the values such as `<name1> <name2>`
     fn render_arg_val(&self, required: bool) -> String {
         let mut rendered = String::new();
-
         let num_vals = self.get_num_args().unwrap_or_else(|| 1.into());
-
         let mut val_names = if self.val_names.is_empty() {
             vec![self.id.as_internal_str().to_owned()]
         } else {
@@ -4719,7 +4595,6 @@ impl Arg {
             let val_name = val_names.pop().unwrap();
             val_names = vec![val_name; min];
         }
-
         debug_assert!(self.is_takes_value_set());
         let min_vals = num_vals.min_values();
         for (n, val_name) in val_names.iter().enumerate() {
@@ -4728,7 +4603,6 @@ impl Arg {
             let is_optional = if self.is_positional() {
                 !required || is_past_min
             } else {
-                // The caller already brackets an optional value; avoid `[[name]]`
                 !is_optional_val && is_past_min
             };
             let arg_name = if is_optional {
@@ -4736,68 +4610,63 @@ impl Arg {
             } else {
                 format!("<{val_name}>")
             };
-
             if n != 0 {
                 rendered.push(' ');
             }
             rendered.push_str(&arg_name);
         }
-
         let mut extra_values = false;
         extra_values |= val_names.len() < num_vals.max_values();
-        if self.is_positional() && matches!(*self.get_action(), ArgAction::Append) {
+        if self.is_positional() && matches!(* self.get_action(), ArgAction::Append) {
             extra_values = true;
         }
         if extra_values {
             rendered.push_str("...");
         }
-
         rendered
     }
-
     /// Either multiple values or occurrences
     pub(crate) fn is_multiple(&self) -> bool {
-        self.is_multiple_values_set() || matches!(*self.get_action(), ArgAction::Append)
+        self.is_multiple_values_set() || matches!(* self.get_action(), ArgAction::Append)
     }
 }
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 impl From<&'_ Arg> for Arg {
     fn from(a: &Arg) -> Self {
         a.clone()
     }
 }
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 impl PartialEq for Arg {
     fn eq(&self, other: &Arg) -> bool {
         self.get_id() == other.get_id()
     }
 }
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 impl PartialOrd for Arg {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.cmp(other))
     }
 }
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 impl Ord for Arg {
     fn cmp(&self, other: &Arg) -> Ordering {
         self.get_id().cmp(other.get_id())
     }
 }
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 impl Eq for Arg {}
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 impl Display for Arg {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         let plain = Styles::plain();
         self.stylized(&plain, None).fmt(f)
     }
 }
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 impl fmt::Debug for Arg {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), fmt::Error> {
         let mut ds = f.debug_struct("Arg");
-
         #[allow(unused_mut)]
         let mut ds = ds
             .field("id", &self.id)
@@ -4827,50 +4696,43 @@ impl fmt::Debug for Arg {
             .field("help_heading", &self.help_heading)
             .field("default_missing_vals", &self.default_missing_vals)
             .field("ext", &self.ext);
-
         #[cfg(feature = "env")]
         {
             ds = ds.field("env", &self.env);
         }
-
         ds.finish()
     }
 }
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 /// User-provided data that can be attached to an [`Arg`]
 #[cfg(feature = "unstable-ext")]
 pub trait ArgExt: Extension {}
-
-// Flags
 #[cfg(test)]
 mod test {
     use super::Arg;
     use super::ArgAction;
-
+    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn flag_display_long() {
         let mut f = Arg::new("flg").long("flag").action(ArgAction::SetTrue);
         f._build();
-
         assert_eq!(f.to_string(), "--flag");
     }
-
+    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn flag_display_short() {
         let mut f2 = Arg::new("flg").short('f').action(ArgAction::SetTrue);
         f2._build();
-
         assert_eq!(f2.to_string(), "-f");
     }
-
+    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn flag_display_count() {
         let mut f2 = Arg::new("flg").long("flag").action(ArgAction::Count);
         f2._build();
-
         assert_eq!(f2.to_string(), "--flag...");
     }
-
+    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn flag_display_single_alias() {
         let mut f = Arg::new("flg")
@@ -4878,85 +4740,64 @@ mod test {
             .visible_alias("als")
             .action(ArgAction::SetTrue);
         f._build();
-
         assert_eq!(f.to_string(), "--flag");
     }
-
+    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn flag_display_multiple_aliases() {
         let mut f = Arg::new("flg").short('f').action(ArgAction::SetTrue);
         f.aliases = vec![
-            ("alias_not_visible".into(), false),
-            ("f2".into(), true),
-            ("f3".into(), true),
-            ("f4".into(), true),
+            ("alias_not_visible".into(), false), ("f2".into(), true), ("f3".into(),
+            true), ("f4".into(), true),
         ];
         f._build();
-
         assert_eq!(f.to_string(), "-f");
     }
-
+    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn flag_display_single_short_alias() {
         let mut f = Arg::new("flg").short('a').action(ArgAction::SetTrue);
         f.short_aliases = vec![('b', true)];
         f._build();
-
         assert_eq!(f.to_string(), "-a");
     }
-
+    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn flag_display_multiple_short_aliases() {
         let mut f = Arg::new("flg").short('a').action(ArgAction::SetTrue);
         f.short_aliases = vec![('b', false), ('c', true), ('d', true), ('e', true)];
         f._build();
-
         assert_eq!(f.to_string(), "-a");
     }
-
-    // Options
-
+    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn option_display_multiple_occurrences() {
         let mut o = Arg::new("opt").long("option").action(ArgAction::Append);
         o._build();
-
         assert_eq!(o.to_string(), "--option <opt>");
     }
-
+    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn option_display_multiple_values() {
-        let mut o = Arg::new("opt")
-            .long("option")
-            .action(ArgAction::Set)
-            .num_args(1..);
+        let mut o = Arg::new("opt").long("option").action(ArgAction::Set).num_args(1..);
         o._build();
-
         assert_eq!(o.to_string(), "--option <opt>...");
     }
-
+    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn option_display_zero_or_more_values() {
-        let mut o = Arg::new("opt")
-            .long("option")
-            .action(ArgAction::Set)
-            .num_args(0..);
+        let mut o = Arg::new("opt").long("option").action(ArgAction::Set).num_args(0..);
         o._build();
-
         assert_eq!(o.to_string(), "--option [<opt>...]");
     }
-
+    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn option_display_one_or_more_values() {
-        let mut o = Arg::new("opt")
-            .long("option")
-            .action(ArgAction::Set)
-            .num_args(1..);
+        let mut o = Arg::new("opt").long("option").action(ArgAction::Set).num_args(1..);
         o._build();
-
         assert_eq!(o.to_string(), "--option <opt>...");
     }
-
+    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn option_display_zero_or_more_values_with_value_name() {
         let mut o = Arg::new("opt")
@@ -4965,10 +4806,9 @@ mod test {
             .num_args(0..)
             .value_names(["file"]);
         o._build();
-
         assert_eq!(o.to_string(), "-o [<file>...]");
     }
-
+    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn option_display_one_or_more_values_with_value_name() {
         let mut o = Arg::new("opt")
@@ -4977,10 +4817,9 @@ mod test {
             .num_args(1..)
             .value_names(["file"]);
         o._build();
-
         assert_eq!(o.to_string(), "-o <file>...");
     }
-
+    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn option_display_optional_value() {
         let mut o = Arg::new("opt")
@@ -4988,10 +4827,9 @@ mod test {
             .action(ArgAction::Set)
             .num_args(0..=1);
         o._build();
-
         assert_eq!(o.to_string(), "--option [<opt>]");
     }
-
+    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn option_display_value_names() {
         let mut o = Arg::new("opt")
@@ -4999,10 +4837,9 @@ mod test {
             .action(ArgAction::Set)
             .value_names(["file", "name"]);
         o._build();
-
         assert_eq!(o.to_string(), "-o <file> <name>");
     }
-
+    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn option_display3() {
         let mut o = Arg::new("opt")
@@ -5011,10 +4848,9 @@ mod test {
             .action(ArgAction::Set)
             .value_names(["file", "name"]);
         o._build();
-
         assert_eq!(o.to_string(), "-o <file> [name]...");
     }
-
+    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn option_display_partially_optional_values() {
         let mut o = Arg::new("opt")
@@ -5023,10 +4859,9 @@ mod test {
             .num_args(1..=2)
             .value_names(["FOO", "BAR"]);
         o._build();
-
         assert_eq!(o.to_string(), "--example <FOO> [BAR]");
     }
-
+    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn option_display_partially_optional_values_require_equals() {
         let mut o = Arg::new("opt")
@@ -5037,10 +4872,9 @@ mod test {
             .value_delimiter(',')
             .value_names(["FOO", "BAR"]);
         o._build();
-
         assert_eq!(o.to_string(), "--example=<FOO> [BAR]");
     }
-
+    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn option_display_partially_optional_values_with_extra_values() {
         let mut o = Arg::new("opt")
@@ -5049,10 +4883,9 @@ mod test {
             .num_args(1..=3)
             .value_names(["A", "B"]);
         o._build();
-
         assert_eq!(o.to_string(), "--example <A> [B]...");
     }
-
+    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn option_display_single_alias() {
         let mut o = Arg::new("opt")
@@ -5060,10 +4893,9 @@ mod test {
             .action(ArgAction::Set)
             .visible_alias("als");
         o._build();
-
         assert_eq!(o.to_string(), "--option <opt>");
     }
-
+    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn option_display_multiple_aliases() {
         let mut o = Arg::new("opt")
@@ -5072,10 +4904,9 @@ mod test {
             .visible_aliases(["als2", "als3", "als4"])
             .alias("als_not_visible");
         o._build();
-
         assert_eq!(o.to_string(), "--option <opt>");
     }
-
+    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn option_display_single_short_alias() {
         let mut o = Arg::new("opt")
@@ -5083,10 +4914,9 @@ mod test {
             .action(ArgAction::Set)
             .visible_short_alias('b');
         o._build();
-
         assert_eq!(o.to_string(), "-a <opt>");
     }
-
+    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn option_display_multiple_short_aliases() {
         let mut o = Arg::new("opt")
@@ -5095,106 +4925,86 @@ mod test {
             .visible_short_aliases(['b', 'c', 'd'])
             .short_alias('e');
         o._build();
-
         assert_eq!(o.to_string(), "-a <opt>");
     }
-
-    // Positionals
-
+    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn positional_display_multiple_values() {
         let mut p = Arg::new("pos").index(1).num_args(1..);
         p._build();
-
         assert_eq!(p.to_string(), "[pos]...");
     }
-
+    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn positional_display_multiple_values_required() {
         let mut p = Arg::new("pos").index(1).num_args(1..).required(true);
         p._build();
-
         assert_eq!(p.to_string(), "<pos>...");
     }
-
+    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn positional_display_zero_or_more_values() {
         let mut p = Arg::new("pos").index(1).num_args(0..);
         p._build();
-
         assert_eq!(p.to_string(), "[pos]...");
     }
-
+    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn positional_display_zero_or_more_values_required() {
         let mut p = Arg::new("pos").index(1).num_args(0..).required(true);
         p._build();
-
         assert_eq!(p.to_string(), "[pos]...");
     }
-
+    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn positional_display_one_or_more_values() {
         let mut p = Arg::new("pos").index(1).num_args(1..);
         p._build();
-
         assert_eq!(p.to_string(), "[pos]...");
     }
-
+    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn positional_display_one_or_more_values_required() {
         let mut p = Arg::new("pos").index(1).num_args(1..).required(true);
         p._build();
-
         assert_eq!(p.to_string(), "<pos>...");
     }
-
+    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn positional_display_optional_value() {
-        let mut p = Arg::new("pos")
-            .index(1)
-            .num_args(0..=1)
-            .action(ArgAction::Set);
+        let mut p = Arg::new("pos").index(1).num_args(0..=1).action(ArgAction::Set);
         p._build();
-
         assert_eq!(p.to_string(), "[pos]");
     }
-
+    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn positional_display_multiple_occurrences() {
         let mut p = Arg::new("pos").index(1).action(ArgAction::Append);
         p._build();
-
         assert_eq!(p.to_string(), "[pos]...");
     }
-
+    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn positional_display_multiple_occurrences_required() {
-        let mut p = Arg::new("pos")
-            .index(1)
-            .action(ArgAction::Append)
-            .required(true);
+        let mut p = Arg::new("pos").index(1).action(ArgAction::Append).required(true);
         p._build();
-
         assert_eq!(p.to_string(), "<pos>...");
     }
-
+    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn positional_display_required() {
         let mut p = Arg::new("pos").index(1).required(true);
         p._build();
-
         assert_eq!(p.to_string(), "<pos>");
     }
-
+    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn positional_display_val_names() {
         let mut p = Arg::new("pos").index(1).value_names(["file1", "file2"]);
         p._build();
-
         assert_eq!(p.to_string(), "[file1] [file2]");
     }
-
+    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn positional_display_val_names_required() {
         let mut p = Arg::new("pos")
@@ -5202,7 +5012,6 @@ mod test {
             .value_names(["file1", "file2"])
             .required(true);
         p._build();
-
         assert_eq!(p.to_string(), "<file1> <file2>");
     }
 }

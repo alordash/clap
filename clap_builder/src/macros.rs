@@ -18,7 +18,6 @@ macro_rules! crate_version {
         env!("CARGO_PKG_VERSION")
     };
 }
-
 /// Allows you to pull the authors for the command from your Cargo.toml at
 /// compile time in the form:
 /// `"author1 lastname <author1@example.com>:author2 lastname <author2@example.com>"`
@@ -41,22 +40,16 @@ macro_rules! crate_version {
 #[cfg(feature = "cargo")]
 #[macro_export]
 macro_rules! crate_authors {
-    ($sep:expr) => {{
-        static AUTHORS: &str = env!("CARGO_PKG_AUTHORS");
-        if AUTHORS.contains(':') {
-            static CACHED: std::sync::OnceLock<String> = std::sync::OnceLock::new();
-            let s = CACHED.get_or_init(|| AUTHORS.replace(':', $sep));
-            let s: &'static str = &*s;
-            s
-        } else {
-            AUTHORS
-        }
-    }};
+    ($sep:expr) => {
+        { static AUTHORS : & str = env!("CARGO_PKG_AUTHORS"); if AUTHORS.contains(':') {
+        static CACHED : std::sync::OnceLock < String > = std::sync::OnceLock::new(); let
+        s = CACHED.get_or_init(|| AUTHORS.replace(':', $sep)); let s : &'static str = &*
+        s; s } else { AUTHORS } }
+    };
     () => {
         env!("CARGO_PKG_AUTHORS")
     };
 }
-
 /// Allows you to pull the description from your Cargo.toml at compile time.
 ///
 /// # Examples
@@ -76,7 +69,6 @@ macro_rules! crate_description {
         env!("CARGO_PKG_DESCRIPTION")
     };
 }
-
 /// Allows you to pull the name from your Cargo.toml at compile time.
 ///
 /// <div class="warning">
@@ -105,7 +97,6 @@ macro_rules! crate_name {
         env!("CARGO_PKG_NAME")
     };
 }
-
 /// Allows you to build the `Command` instance from your Cargo.toml at compile time.
 ///
 /// <div class="warning">
@@ -129,309 +120,145 @@ macro_rules! crate_name {
 #[cfg(feature = "cargo")]
 #[macro_export]
 macro_rules! command {
-    () => {{ $crate::command!($crate::crate_name!()) }};
-    ($name:expr) => {{
-        let mut cmd = $crate::Command::new($name).version($crate::crate_version!());
-
-        let author = $crate::crate_authors!();
-        if !author.is_empty() {
-            cmd = cmd.author(author)
-        }
-
-        let about = $crate::crate_description!();
-        if !about.is_empty() {
-            cmd = cmd.about(about)
-        }
-
-        cmd
-    }};
+    () => {
+        { $crate::command!($crate::crate_name!()) }
+    };
+    ($name:expr) => {
+        { let mut cmd = $crate::Command::new($name).version($crate::crate_version!());
+        let author = $crate::crate_authors!(); if ! author.is_empty() { cmd = cmd
+        .author(author) } let about = $crate::crate_description!(); if ! about.is_empty()
+        { cmd = cmd.about(about) } cmd }
+    };
 }
-
 /// Requires `cargo` feature flag to be enabled.
 #[cfg(not(feature = "cargo"))]
 #[macro_export]
 macro_rules! command {
-    () => {{
-        compile_error!("`cargo` feature flag is required");
-    }};
-    ($name:expr) => {{
-        compile_error!("`cargo` feature flag is required");
-    }};
+    () => {
+        { compile_error!("`cargo` feature flag is required"); }
+    };
+    ($name:expr) => {
+        { compile_error!("`cargo` feature flag is required"); }
+    };
 }
-
 #[doc(hidden)]
 #[macro_export]
 macro_rules! arg_impl {
-    ( @string $val:ident ) => {
+    (@ string $val:ident) => {
         stringify!($val)
     };
-    ( @string $val:literal ) => {{
-        let ident_or_string_literal: &str = $val;
-        ident_or_string_literal
-    }};
-    ( @string $val:tt ) => {
+    (@ string $val:literal) => {
+        { let ident_or_string_literal : & str = $val; ident_or_string_literal }
+    };
+    (@ string $val:tt) => {
         ::std::compile_error!("Only identifiers or string literals supported");
     };
-    ( @string ) => {
+    (@ string) => {
         None
     };
-
-    ( @char $val:ident ) => {{
-        let ident_or_char_literal = stringify!($val);
-        debug_assert_eq!(
-            ident_or_char_literal.len(),
-            1,
-            "Single-letter identifier expected, got {ident_or_char_literal}",
-        );
-        ident_or_char_literal.chars().next().unwrap()
-    }};
-    ( @char $val:literal ) => {{
-        let ident_or_char_literal: char = $val;
-        ident_or_char_literal
-    }};
-    ( @char ) => {{
-        None
-    }};
-
-    (
-        @arg
-        ($arg:expr)
-        --$long:ident
-        $($tail:tt)*
-    ) => {{
-        debug_assert_eq!($arg.get_value_names(), None, "Flags should precede values");
-        debug_assert!(!matches!($arg.get_action(), $crate::ArgAction::Append), "Flags should precede `...`");
-
-        let mut arg = $arg;
-        let long = $crate::arg_impl! { @string $long };
-        if arg.get_id() == "" {
-            arg = arg.id(long);
-        }
-        let action = $crate::ArgAction::SetTrue;
-        let arg = arg
-            .long(long)
-            .action(action);
-        let arg = $crate::arg_impl! {
-            @arg (arg) $($tail)*
-        };
-        arg
-    }};
-    (
-        @arg
-        ($arg:expr)
-        --$long:literal
-        $($tail:tt)*
-    ) => {{
-        debug_assert_eq!($arg.get_value_names(), None, "Flags should precede values");
-        debug_assert!(!matches!($arg.get_action(), $crate::ArgAction::Append), "Flags should precede `...`");
-
-        let mut arg = $arg;
-        let long = $crate::arg_impl! { @string $long };
-        if arg.get_id() == "" {
-            arg = arg.id(long);
-        }
-        let action = $crate::ArgAction::SetTrue;
-        let arg = arg
-            .long(long)
-            .action(action);
-        let arg = $crate::arg_impl! {
-            @arg (arg) $($tail)*
-        };
-        arg
-    }};
-    (
-        @arg
-        ($arg:expr)
-        -$short:ident
-        $($tail:tt)*
-    ) => {{
-        debug_assert_eq!($arg.get_long(), None, "Short flags should precede long flags");
-        debug_assert_eq!($arg.get_value_names(), None, "Flags should precede values");
-        debug_assert!(!matches!($arg.get_action(), $crate::ArgAction::Append), "Flags should precede `...`");
-
-        let action = $crate::ArgAction::SetTrue;
-        let arg = $arg
-            .short($crate::arg_impl! { @char $short })
-            .action(action);
-        let arg = $crate::arg_impl! {
-            @arg (arg) $($tail)*
-        };
-        arg
-    }};
-    (
-        @arg
-        ($arg:expr)
-        -$short:literal
-        $($tail:tt)*
-    ) => {{
-        debug_assert_eq!($arg.get_long(), None, "Short flags should precede long flags");
-        debug_assert_eq!($arg.get_value_names(), None, "Flags should precede values");
-        debug_assert!(!matches!($arg.get_action(), $crate::ArgAction::Append), "Flags should precede `...`");
-
-        let action = $crate::ArgAction::SetTrue;
-        let arg = $arg
-            .short($crate::arg_impl! { @char $short })
-            .action(action);
-        let arg = $crate::arg_impl! {
-            @arg (arg) $($tail)*
-        };
-        arg
-    }};
-    (
-        @arg
-        ($arg:expr)
-        <$value_name:ident>
-        $($tail:tt)*
-    ) => {{
-        debug_assert!(!matches!($arg.get_action(), $crate::ArgAction::Append), "Flags should precede `...`");
-        debug_assert_eq!($arg.get_value_names(), None, "Multiple values not yet supported");
-
-        let mut arg = $arg;
-
-        if arg.get_long().is_none() && arg.get_short().is_none() {
-            arg = arg.required(true);
-        }
-
-        let value_name = $crate::arg_impl! { @string $value_name };
-        if arg.get_id() == "" {
-            arg = arg.id(value_name);
-        }
-        let arg = arg
-            .value_name(value_name)
-            .action($crate::ArgAction::Set);
-        let arg = $crate::arg_impl! {
-            @arg (arg) $($tail)*
-        };
-        arg
-    }};
-    (
-        @arg
-        ($arg:expr)
-        <$value_name:literal>
-        $($tail:tt)*
-    ) => {{
-        debug_assert!(!matches!($arg.get_action(), $crate::ArgAction::Append), "Flags should precede `...`");
-        debug_assert_eq!($arg.get_value_names(), None, "Multiple values not yet supported");
-
-        let mut arg = $arg;
-
-        if arg.get_long().is_none() && arg.get_short().is_none() {
-            arg = arg.required(true);
-        }
-
-        let value_name = $crate::arg_impl! { @string $value_name };
-        if arg.get_id() == "" {
-            arg = arg.id(value_name);
-        }
-        let arg = arg
-            .value_name(value_name)
-            .action($crate::ArgAction::Set);
-        let arg = $crate::arg_impl! {
-            @arg (arg) $($tail)*
-        };
-        arg
-    }};
-    (
-        @arg
-        ($arg:expr)
-        [$value_name:ident]
-        $($tail:tt)*
-    ) => {{
-        debug_assert!(!matches!($arg.get_action(), $crate::ArgAction::Append), "Flags should precede `...`");
-        debug_assert_eq!($arg.get_value_names(), None, "Multiple values not yet supported");
-
-        let mut arg = $arg;
-
-        if arg.get_long().is_none() && arg.get_short().is_none() {
-            arg = arg.required(false);
-        } else {
-            arg = arg.num_args(0..=1);
-        }
-
-        let value_name = $crate::arg_impl! { @string $value_name };
-        if arg.get_id() == "" {
-            arg = arg.id(value_name);
-        }
-        let arg = arg
-            .value_name(value_name)
-            .action($crate::ArgAction::Set);
-        let arg = $crate::arg_impl! {
-            @arg (arg) $($tail)*
-        };
-        arg
-    }};
-    (
-        @arg
-        ($arg:expr)
-        [$value_name:literal]
-        $($tail:tt)*
-    ) => {{
-        debug_assert!(!matches!($arg.get_action(), $crate::ArgAction::Append), "Flags should precede `...`");
-        debug_assert_eq!($arg.get_value_names(), None, "Multiple values not yet supported");
-
-        let mut arg = $arg;
-
-        if arg.get_long().is_none() && arg.get_short().is_none() {
-            arg = arg.required(false);
-        } else {
-            arg = arg.num_args(0..=1);
-        }
-
-        let value_name = $crate::arg_impl! { @string $value_name };
-        if arg.get_id() == "" {
-            arg = arg.id(value_name);
-        }
-        let arg = arg
-            .value_name(value_name)
-            .action($crate::ArgAction::Set);
-        let arg = $crate::arg_impl! {
-            @arg (arg) $($tail)*
-        };
-        arg
-    }};
-    (
-        @arg
-        ($arg:expr)
-        ...
-        $($tail:tt)*
-    ) => {{
-        let arg = match $arg.get_action() {
-            $crate::ArgAction::Set => {
-                if $arg.get_long().is_none() && $arg.get_short().is_none() {
-                    $arg.num_args(1..)
-                        // Allow collecting arguments interleaved with flags
-                        .action($crate::ArgAction::Append)
-                } else {
-                    $arg.action($crate::ArgAction::Append)
-                }
-            },
-            $crate::ArgAction::SetTrue | $crate::ArgAction::Help | $crate::ArgAction::Version => {
-                $arg.action($crate::ArgAction::Count)
-            }
-            action => {
-                panic!("Unexpected action {action:?}")
-            }
-        };
-        let arg = $crate::arg_impl! {
-            @arg (arg) $($tail)*
-        };
-        arg
-    }};
-    (
-        @arg
-        ($arg:expr)
-        $help:literal
-    ) => {{
-        $arg.help($help)
-    }};
-    (
-        @arg
-        ($arg:expr)
-    ) => {{
-        $arg
-    }};
+    (@ char $val:ident) => {
+        { let ident_or_char_literal = stringify!($val);
+        debug_assert_eq!(ident_or_char_literal.len(), 1,
+        "Single-letter identifier expected, got {ident_or_char_literal}",);
+        ident_or_char_literal.chars().next().unwrap() }
+    };
+    (@ char $val:literal) => {
+        { let ident_or_char_literal : char = $val; ident_or_char_literal }
+    };
+    (@ char) => {
+        { None }
+    };
+    (@ arg($arg:expr) --$long:ident $($tail:tt)*) => {
+        { debug_assert_eq!($arg .get_value_names(), None, "Flags should precede values");
+        debug_assert!(! matches!($arg .get_action(), $crate::ArgAction::Append),
+        "Flags should precede `...`"); let mut arg = $arg; let long = $crate::arg_impl! {
+        @ string $long }; if arg.get_id() == "" { arg = arg.id(long); } let action =
+        $crate::ArgAction::SetTrue; let arg = arg.long(long).action(action); let arg =
+        $crate::arg_impl! { @ arg(arg) $($tail)* }; arg }
+    };
+    (@ arg($arg:expr) --$long:literal $($tail:tt)*) => {
+        { debug_assert_eq!($arg .get_value_names(), None, "Flags should precede values");
+        debug_assert!(! matches!($arg .get_action(), $crate::ArgAction::Append),
+        "Flags should precede `...`"); let mut arg = $arg; let long = $crate::arg_impl! {
+        @ string $long }; if arg.get_id() == "" { arg = arg.id(long); } let action =
+        $crate::ArgAction::SetTrue; let arg = arg.long(long).action(action); let arg =
+        $crate::arg_impl! { @ arg(arg) $($tail)* }; arg }
+    };
+    (@ arg($arg:expr) -$short:ident $($tail:tt)*) => {
+        { debug_assert_eq!($arg .get_long(), None,
+        "Short flags should precede long flags"); debug_assert_eq!($arg
+        .get_value_names(), None, "Flags should precede values"); debug_assert!(!
+        matches!($arg .get_action(), $crate::ArgAction::Append),
+        "Flags should precede `...`"); let action = $crate::ArgAction::SetTrue; let arg =
+        $arg .short($crate::arg_impl! { @ char $short }).action(action); let arg =
+        $crate::arg_impl! { @ arg(arg) $($tail)* }; arg }
+    };
+    (@ arg($arg:expr) -$short:literal $($tail:tt)*) => {
+        { debug_assert_eq!($arg .get_long(), None,
+        "Short flags should precede long flags"); debug_assert_eq!($arg
+        .get_value_names(), None, "Flags should precede values"); debug_assert!(!
+        matches!($arg .get_action(), $crate::ArgAction::Append),
+        "Flags should precede `...`"); let action = $crate::ArgAction::SetTrue; let arg =
+        $arg .short($crate::arg_impl! { @ char $short }).action(action); let arg =
+        $crate::arg_impl! { @ arg(arg) $($tail)* }; arg }
+    };
+    (@ arg($arg:expr) <$value_name:ident > $($tail:tt)*) => {
+        { debug_assert!(! matches!($arg .get_action(), $crate::ArgAction::Append),
+        "Flags should precede `...`"); debug_assert_eq!($arg .get_value_names(), None,
+        "Multiple values not yet supported"); let mut arg = $arg; if arg.get_long()
+        .is_none() && arg.get_short().is_none() { arg = arg.required(true); } let
+        value_name = $crate::arg_impl! { @ string $value_name }; if arg.get_id() == "" {
+        arg = arg.id(value_name); } let arg = arg.value_name(value_name)
+        .action($crate::ArgAction::Set); let arg = $crate::arg_impl! { @ arg(arg)
+        $($tail)* }; arg }
+    };
+    (@ arg($arg:expr) <$value_name:literal > $($tail:tt)*) => {
+        { debug_assert!(! matches!($arg .get_action(), $crate::ArgAction::Append),
+        "Flags should precede `...`"); debug_assert_eq!($arg .get_value_names(), None,
+        "Multiple values not yet supported"); let mut arg = $arg; if arg.get_long()
+        .is_none() && arg.get_short().is_none() { arg = arg.required(true); } let
+        value_name = $crate::arg_impl! { @ string $value_name }; if arg.get_id() == "" {
+        arg = arg.id(value_name); } let arg = arg.value_name(value_name)
+        .action($crate::ArgAction::Set); let arg = $crate::arg_impl! { @ arg(arg)
+        $($tail)* }; arg }
+    };
+    (@ arg($arg:expr) [$value_name:ident] $($tail:tt)*) => {
+        { debug_assert!(! matches!($arg .get_action(), $crate::ArgAction::Append),
+        "Flags should precede `...`"); debug_assert_eq!($arg .get_value_names(), None,
+        "Multiple values not yet supported"); let mut arg = $arg; if arg.get_long()
+        .is_none() && arg.get_short().is_none() { arg = arg.required(false); } else { arg
+        = arg.num_args(0..= 1); } let value_name = $crate::arg_impl! { @ string
+        $value_name }; if arg.get_id() == "" { arg = arg.id(value_name); } let arg = arg
+        .value_name(value_name).action($crate::ArgAction::Set); let arg =
+        $crate::arg_impl! { @ arg(arg) $($tail)* }; arg }
+    };
+    (@ arg($arg:expr) [$value_name:literal] $($tail:tt)*) => {
+        { debug_assert!(! matches!($arg .get_action(), $crate::ArgAction::Append),
+        "Flags should precede `...`"); debug_assert_eq!($arg .get_value_names(), None,
+        "Multiple values not yet supported"); let mut arg = $arg; if arg.get_long()
+        .is_none() && arg.get_short().is_none() { arg = arg.required(false); } else { arg
+        = arg.num_args(0..= 1); } let value_name = $crate::arg_impl! { @ string
+        $value_name }; if arg.get_id() == "" { arg = arg.id(value_name); } let arg = arg
+        .value_name(value_name).action($crate::ArgAction::Set); let arg =
+        $crate::arg_impl! { @ arg(arg) $($tail)* }; arg }
+    };
+    (@ arg($arg:expr) ... $($tail:tt)*) => {
+        { let arg = match $arg .get_action() { $crate::ArgAction::Set => { if $arg
+        .get_long().is_none() && $arg .get_short().is_none() { $arg .num_args(1..)
+        .action($crate::ArgAction::Append) } else { $arg
+        .action($crate::ArgAction::Append) } }, $crate::ArgAction::SetTrue |
+        $crate::ArgAction::Help | $crate::ArgAction::Version => { $arg
+        .action($crate::ArgAction::Count) } action => {
+        panic!("Unexpected action {action:?}") } }; let arg = $crate::arg_impl! { @
+        arg(arg) $($tail)* }; arg }
+    };
+    (@ arg($arg:expr) $help:literal) => {
+        { $arg .help($help) }
+    };
+    (@ arg($arg:expr)) => {
+        { $arg }
+    };
 }
-
 /// Create an [`Arg`] from a usage string.
 ///
 /// Allows creation of basic settings for the [`Arg`].
@@ -528,76 +355,47 @@ macro_rules! arg_impl {
 /// [`Arg`]: crate::Arg
 #[macro_export]
 macro_rules! arg {
-    ( -$($tail:tt)+ ) => {{
-        let arg = $crate::Arg::default();
-        let arg = $crate::arg_impl! {
-            @arg (arg) -$($tail)+
-        };
-        debug_assert_ne!(arg.get_id(), "", "Without a value or long flag, the `name:` prefix is required");
-        arg
-    }};
-    ( $name:ident: $($tail:tt)+ ) => {{
-        let arg = $crate::Arg::new($crate::arg_impl! { @string $name });
-        let arg = $crate::arg_impl! {
-            @arg (arg) $($tail)+
-        };
-        arg
-    }};
-    ( $name:literal: $($tail:tt)+ ) => {{
-        let arg = $crate::Arg::new($crate::arg_impl! { @string $name });
-        let arg = $crate::arg_impl! {
-            @arg (arg) $($tail)+
-        };
-        arg
-    }};
-    ( $($tail:tt)+ ) => {{
-        let arg = $crate::Arg::default();
-        let arg = $crate::arg_impl! {
-            @arg (arg) $($tail)+
-        };
-        debug_assert_ne!(arg.get_id(), "", "Without a value or long flag, the `name:` prefix is required");
-        arg
-    }};
+    (-$($tail:tt)+) => {
+        { let arg = $crate::Arg::default(); let arg = $crate::arg_impl! { @ arg(arg)
+        -$($tail)+ }; debug_assert_ne!(arg.get_id(), "",
+        "Without a value or long flag, the `name:` prefix is required"); arg }
+    };
+    ($name:ident : $($tail:tt)+) => {
+        { let arg = $crate::Arg::new($crate::arg_impl! { @ string $name }); let arg =
+        $crate::arg_impl! { @ arg(arg) $($tail)+ }; arg }
+    };
+    ($name:literal : $($tail:tt)+) => {
+        { let arg = $crate::Arg::new($crate::arg_impl! { @ string $name }); let arg =
+        $crate::arg_impl! { @ arg(arg) $($tail)+ }; arg }
+    };
+    ($($tail:tt)+) => {
+        { let arg = $crate::Arg::default(); let arg = $crate::arg_impl! { @ arg(arg)
+        $($tail)+ }; debug_assert_ne!(arg.get_id(), "",
+        "Without a value or long flag, the `name:` prefix is required"); arg }
+    };
 }
-
 #[cfg(feature = "debug")]
 macro_rules! debug {
-    ($($arg:tt)*) => ({
-        use std::fmt::Write as _;
-        let hint = anstyle::Style::new().dimmed();
-
-        let module_path = module_path!();
-        let body = format!($($arg)*);
-        let mut styled = $crate::builder::StyledStr::new();
-        let _ = write!(styled, "{hint}[{module_path:>28}]{body}{hint:#}\n");
-        let color = $crate::output::fmt::Colorizer::new($crate::output::fmt::Stream::Stderr, $crate::ColorChoice::Auto).with_content(styled);
-        let _ = color.print();
-    })
+    ($($arg:tt)*) => {
+        { use std::fmt::Write as _; let hint = anstyle::Style::new().dimmed(); let
+        module_path = module_path!(); let body = format!($($arg)*); let mut styled =
+        $crate::builder::StyledStr::new(); let _ = write!(styled,
+        "{hint}[{module_path:>28}]{body}{hint:#}\n"); let color =
+        $crate::output::fmt::Colorizer::new($crate::output::fmt::Stream::Stderr,
+        $crate::ColorChoice::Auto).with_content(styled); let _ = color.print(); }
+    };
 }
-
 #[cfg(not(feature = "debug"))]
 macro_rules! debug {
     ($($arg:tt)*) => {};
 }
-
 macro_rules! ok {
     ($expr:expr) => {
-        match $expr {
-            Ok(val) => val,
-            Err(err) => {
-                return Err(err);
-            }
-        }
+        match $expr { Ok(val) => val, Err(err) => { return Err(err); } }
     };
 }
-
 macro_rules! some {
     ($expr:expr) => {
-        match $expr {
-            Some(val) => val,
-            None => {
-                return None;
-            }
-        }
+        match $expr { Some(val) => val, None => { return None; } }
     };
 }

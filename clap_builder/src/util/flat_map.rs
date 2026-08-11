@@ -1,7 +1,6 @@
 #![allow(dead_code)]
-
 use std::borrow::Borrow;
-
+#[cfg_attr(test, rsubstitute::mock)]
 /// Flat (Vec) backed map
 ///
 /// This preserves insertion order
@@ -10,12 +9,11 @@ pub(crate) struct FlatMap<K, V> {
     keys: Vec<K>,
     values: Vec<V>,
 }
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 impl<K: PartialEq + Eq, V> FlatMap<K, V> {
     pub(crate) fn new() -> Self {
         Default::default()
     }
-
     pub(crate) fn insert(&mut self, key: K, mut value: V) -> Option<V> {
         for (index, existing) in self.keys.iter().enumerate() {
             if *existing == key {
@@ -23,22 +21,18 @@ impl<K: PartialEq + Eq, V> FlatMap<K, V> {
                 return Some(value);
             }
         }
-
         self.insert_unchecked(key, value);
         None
     }
-
     pub(crate) fn insert_unchecked(&mut self, key: K, value: V) {
         self.keys.push(key);
         self.values.push(value);
     }
-
     pub(crate) fn extend_unchecked(&mut self, iter: impl IntoIterator<Item = (K, V)>) {
         for (key, value) in iter {
             self.insert_unchecked(key, value);
         }
     }
-
     pub(crate) fn contains_key<Q: ?Sized>(&self, key: &Q) -> bool
     where
         K: Borrow<Q>,
@@ -51,7 +45,6 @@ impl<K: PartialEq + Eq, V> FlatMap<K, V> {
         }
         false
     }
-
     pub(crate) fn remove<Q: ?Sized>(&mut self, key: &Q) -> Option<V>
     where
         K: Borrow<Q>,
@@ -59,27 +52,22 @@ impl<K: PartialEq + Eq, V> FlatMap<K, V> {
     {
         self.remove_entry(key).map(|(_, v)| v)
     }
-
     pub(crate) fn remove_entry<Q: ?Sized>(&mut self, key: &Q) -> Option<(K, V)>
     where
         K: Borrow<Q>,
         Q: std::hash::Hash + Eq,
     {
         let index = some!(
-            self.keys
-                .iter()
-                .enumerate()
-                .find_map(|(i, k)| (k.borrow() == key).then_some(i))
+            self.keys.iter().enumerate().find_map(| (i, k) | (k.borrow() == key)
+            .then_some(i))
         );
         let key = self.keys.remove(index);
         let value = self.values.remove(index);
         Some((key, value))
     }
-
     pub(crate) fn is_empty(&self) -> bool {
         self.keys.is_empty()
     }
-
     pub(crate) fn entry(&mut self, key: K) -> Entry<'_, K, V> {
         for (index, existing) in self.keys.iter().enumerate() {
             if *existing == key {
@@ -88,7 +76,6 @@ impl<K: PartialEq + Eq, V> FlatMap<K, V> {
         }
         Entry::Vacant(VacantEntry { v: self, key })
     }
-
     pub(crate) fn get<Q: ?Sized>(&self, k: &Q) -> Option<&V>
     where
         K: Borrow<Q>,
@@ -101,7 +88,6 @@ impl<K: PartialEq + Eq, V> FlatMap<K, V> {
         }
         None
     }
-
     pub(crate) fn get_mut<Q: ?Sized>(&mut self, k: &Q) -> Option<&mut V>
     where
         K: Borrow<Q>,
@@ -114,22 +100,18 @@ impl<K: PartialEq + Eq, V> FlatMap<K, V> {
         }
         None
     }
-
     pub(crate) fn keys(&self) -> std::slice::Iter<'_, K> {
         self.keys.iter()
     }
-
     pub(crate) fn values(&self) -> std::slice::Iter<'_, V> {
         self.values.iter()
     }
-
     pub(crate) fn iter(&self) -> Iter<'_, K, V> {
         Iter {
             keys: self.keys.iter(),
             values: self.values.iter(),
         }
     }
-
     pub(crate) fn iter_mut(&mut self) -> IterMut<'_, K, V> {
         IterMut {
             keys: self.keys.iter_mut(),
@@ -137,7 +119,7 @@ impl<K: PartialEq + Eq, V> FlatMap<K, V> {
         }
     }
 }
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 impl<K: PartialEq + Eq, V> Default for FlatMap<K, V> {
     fn default() -> Self {
         Self {
@@ -146,12 +128,10 @@ impl<K: PartialEq + Eq, V> Default for FlatMap<K, V> {
         }
     }
 }
-
 pub(crate) enum Entry<'a, K, V> {
     Vacant(VacantEntry<'a, K, V>),
     Occupied(OccupiedEntry<'a, K, V>),
 }
-
 impl<'a, K: 'a, V: 'a> Entry<'a, K, V> {
     pub(crate) fn or_insert(self, default: V) -> &'a mut V {
         match self {
@@ -163,7 +143,6 @@ impl<'a, K: 'a, V: 'a> Entry<'a, K, V> {
             }
         }
     }
-
     pub(crate) fn or_insert_with<F: FnOnce() -> V>(self, default: F) -> &'a mut V {
         match self {
             Entry::Occupied(entry) => &mut entry.v.values[entry.index],
@@ -175,25 +154,24 @@ impl<'a, K: 'a, V: 'a> Entry<'a, K, V> {
         }
     }
 }
-
+#[cfg_attr(test, rsubstitute::mock)]
 pub(crate) struct VacantEntry<'a, K, V> {
     v: &'a mut FlatMap<K, V>,
     key: K,
 }
-
+#[cfg_attr(test, rsubstitute::mock)]
 pub(crate) struct OccupiedEntry<'a, K, V> {
     v: &'a mut FlatMap<K, V>,
     index: usize,
 }
-
+#[cfg_attr(test, rsubstitute::mock)]
 pub(crate) struct Iter<'a, K, V> {
     keys: std::slice::Iter<'a, K>,
     values: std::slice::Iter<'a, V>,
 }
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 impl<'a, K, V> Iterator for Iter<'a, K, V> {
     type Item = (&'a K, &'a V);
-
     fn next(&mut self) -> Option<(&'a K, &'a V)> {
         match self.keys.next() {
             Some(k) => {
@@ -207,7 +185,7 @@ impl<'a, K, V> Iterator for Iter<'a, K, V> {
         self.keys.size_hint()
     }
 }
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 impl<'a, K, V> DoubleEndedIterator for Iter<'a, K, V> {
     fn next_back(&mut self) -> Option<(&'a K, &'a V)> {
         match self.keys.next_back() {
@@ -219,17 +197,16 @@ impl<'a, K, V> DoubleEndedIterator for Iter<'a, K, V> {
         }
     }
 }
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 impl<K, V> ExactSizeIterator for Iter<'_, K, V> {}
-
+#[cfg_attr(test, rsubstitute::mock)]
 pub(crate) struct IterMut<'a, K, V> {
     keys: std::slice::IterMut<'a, K>,
     values: std::slice::IterMut<'a, V>,
 }
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 impl<'a, K, V> Iterator for IterMut<'a, K, V> {
     type Item = (&'a K, &'a mut V);
-
     fn next(&mut self) -> Option<(&'a K, &'a mut V)> {
         match self.keys.next() {
             Some(k) => {
@@ -243,7 +220,7 @@ impl<'a, K, V> Iterator for IterMut<'a, K, V> {
         self.keys.size_hint()
     }
 }
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 impl<'a, K, V> DoubleEndedIterator for IterMut<'a, K, V> {
     fn next_back(&mut self) -> Option<(&'a K, &'a mut V)> {
         match self.keys.next_back() {
@@ -255,5 +232,5 @@ impl<'a, K, V> DoubleEndedIterator for IterMut<'a, K, V> {
         }
     }
 }
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 impl<K, V> ExactSizeIterator for IterMut<'_, K, V> {}

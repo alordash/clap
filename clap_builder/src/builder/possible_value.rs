@@ -4,7 +4,7 @@ use crate::builder::StyledStr;
 #[cfg(feature = "help")]
 use crate::util::Escape;
 use crate::util::eq_ignore_case;
-
+#[cfg_attr(test, rsubstitute::mock)]
 /// A possible value of an argument.
 ///
 /// This is used for specifying [possible values] of [Args].
@@ -42,10 +42,10 @@ use crate::util::eq_ignore_case;
 pub struct PossibleValue {
     name: Str,
     help: Option<StyledStr>,
-    aliases: Vec<Str>, // (name, visible)
+    aliases: Vec<Str>,
     hide: bool,
 }
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 impl PossibleValue {
     /// Create a [`PossibleValue`] with its name.
     ///
@@ -75,7 +75,6 @@ impl PossibleValue {
             ..Default::default()
         }
     }
-
     /// Sets the help description of the value.
     ///
     /// This is typically displayed in completions (where supported) and should be a short, one-line
@@ -96,7 +95,6 @@ impl PossibleValue {
         self.help = help.into_resettable().into_option();
         self
     }
-
     /// Hides this value from help and shell completions.
     ///
     /// This is an alternative to hiding through [`Arg::hide_possible_values(true)`], if you only
@@ -118,7 +116,6 @@ impl PossibleValue {
         self.hide = yes;
         self
     }
-
     /// Sets a *hidden* alias for this argument value.
     ///
     /// # Examples
@@ -139,7 +136,6 @@ impl PossibleValue {
         }
         self
     }
-
     /// Sets multiple *hidden* aliases for this argument value.
     ///
     /// # Examples
@@ -157,7 +153,7 @@ impl PossibleValue {
         self
     }
 }
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 /// Reflection
 impl PossibleValue {
     /// Get the name of the argument value
@@ -165,42 +161,32 @@ impl PossibleValue {
     pub fn get_name(&self) -> &str {
         self.name.as_str()
     }
-
     /// Get the help specified for this argument, if any
     #[inline]
     pub fn get_help(&self) -> Option<&StyledStr> {
         self.help.as_ref()
     }
-
     /// Report if [`PossibleValue::hide`] is set
     #[inline]
     pub fn is_hide_set(&self) -> bool {
         self.hide
     }
-
     /// Report if `PossibleValue` is not hidden and has a help message
     pub(crate) fn should_show_help(&self) -> bool {
         !self.hide && self.help.is_some()
     }
-
     /// Get the name if argument value is not hidden, `None` otherwise,
     /// but wrapped in quotes if it contains whitespace
     #[cfg(feature = "help")]
     pub(crate) fn get_visible_quoted_name(&self) -> Option<std::borrow::Cow<'_, str>> {
-        if !self.hide {
-            Some(Escape(self.name.as_str()).to_cow())
-        } else {
-            None
-        }
+        if !self.hide { Some(Escape(self.name.as_str()).to_cow()) } else { None }
     }
-
     /// Returns all valid values of the argument value.
     ///
     /// Namely the name and all aliases.
     pub fn get_name_and_aliases(&self) -> impl Iterator<Item = &str> + '_ {
         std::iter::once(self.get_name()).chain(self.aliases.iter().map(|s| s.as_str()))
     }
-
     /// Tests if the value is valid for this argument value
     ///
     /// The value is valid if it is either the name or one of the aliases.
@@ -220,14 +206,13 @@ impl PossibleValue {
     /// ```
     pub fn matches(&self, value: &str, ignore_case: bool) -> bool {
         if ignore_case {
-            self.get_name_and_aliases()
-                .any(|name| eq_ignore_case(name, value))
+            self.get_name_and_aliases().any(|name| eq_ignore_case(name, value))
         } else {
             self.get_name_and_aliases().any(|name| name == value)
         }
     }
 }
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 impl<S: Into<Str>> From<S> for PossibleValue {
     fn from(s: S) -> Self {
         Self::new(s)

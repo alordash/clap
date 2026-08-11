@@ -1,5 +1,4 @@
 //! Define [`Command`] line [arguments][`Arg`]
-
 mod action;
 mod app_settings;
 mod arg;
@@ -16,15 +15,11 @@ mod str;
 mod styled_str;
 mod value_hint;
 mod value_parser;
-
 #[cfg(debug_assertions)]
 mod debug_asserts;
-
 #[cfg(test)]
 mod tests;
-
 pub mod styling;
-
 pub use self::str::Str;
 pub use action::ArgAction;
 pub use arg::Arg;
@@ -63,7 +58,6 @@ pub use value_parser::UnknownArgumentValueParser;
 pub use value_parser::ValueParser;
 pub use value_parser::ValueParserFactory;
 pub use value_parser::impl_prelude;
-
 #[allow(unused_imports)]
 pub(crate) use self::str::Inner as StrInner;
 pub(crate) use action::CountType;

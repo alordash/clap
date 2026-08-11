@@ -18,7 +18,6 @@ pub enum ErrorKind {
     /// assert_eq!(result.unwrap_err().kind(), ErrorKind::InvalidValue);
     /// ```
     InvalidValue,
-
     /// Occurs when a user provides a flag, option, argument or subcommand which isn't defined.
     ///
     /// # Examples
@@ -33,7 +32,6 @@ pub enum ErrorKind {
     /// assert_eq!(result.unwrap_err().kind(), ErrorKind::UnknownArgument);
     /// ```
     UnknownArgument,
-
     /// Occurs when the user provides an unrecognized [`Subcommand`] which meets the threshold for
     /// being similar enough to an existing subcommand.
     /// If it doesn't meet the threshold, or the 'suggestions' feature is disabled,
@@ -59,7 +57,6 @@ pub enum ErrorKind {
     /// [`Subcommand`]: crate::Subcommand
     /// [`UnknownArgument`]: ErrorKind::UnknownArgument
     InvalidSubcommand,
-
     /// Occurs when the user doesn't use equals for an option that requires equal
     /// sign to provide values.
     ///
@@ -76,7 +73,6 @@ pub enum ErrorKind {
     /// assert_eq!(res.unwrap_err().kind(), ErrorKind::NoEquals);
     /// ```
     NoEquals,
-
     /// Occurs when the user provides a value for an argument with a custom validation and the
     /// value fails that validation.
     ///
@@ -100,7 +96,6 @@ pub enum ErrorKind {
     /// assert_eq!(result.unwrap_err().kind(), ErrorKind::ValueValidation);
     /// ```
     ValueValidation,
-
     /// Occurs when a user provides more values for an argument than were defined by setting
     /// [`Arg::num_args`].
     ///
@@ -118,7 +113,6 @@ pub enum ErrorKind {
     /// ```
     /// [`Arg::num_args`]: crate::Arg::num_args()
     TooManyValues,
-
     /// Occurs when the user provides fewer values for an argument than were defined by setting
     /// [`Arg::num_args`].
     ///
@@ -137,7 +131,6 @@ pub enum ErrorKind {
     /// ```
     /// [`Arg::num_args`]: crate::Arg::num_args()
     TooFewValues,
-
     /// Occurs when the user provides a different number of values for an argument than what's
     /// been defined by setting [`Arg::num_args`] or than was implicitly set by
     /// [`Arg::value_names`].
@@ -160,7 +153,6 @@ pub enum ErrorKind {
     /// [`Arg::num_args`]: crate::Arg::num_args()
     /// [`Arg::value_names`]: crate::Arg::value_names()
     WrongNumberOfValues,
-
     /// Occurs when the user provides two values which conflict with each other and can't be used
     /// together.
     ///
@@ -182,7 +174,6 @@ pub enum ErrorKind {
     /// assert_eq!(result.unwrap_err().kind(), ErrorKind::ArgumentConflict);
     /// ```
     ArgumentConflict,
-
     /// Occurs when the user does not provide one or more required arguments.
     ///
     /// # Examples
@@ -198,7 +189,6 @@ pub enum ErrorKind {
     /// assert_eq!(result.unwrap_err().kind(), ErrorKind::MissingRequiredArgument);
     /// ```
     MissingRequiredArgument,
-
     /// Occurs when a subcommand is required (as defined by [`Command::subcommand_required`]),
     /// but the user does not provide one.
     ///
@@ -220,7 +210,6 @@ pub enum ErrorKind {
     ///
     /// [`Command::subcommand_required`]: crate::Command::subcommand_required
     MissingSubcommand,
-
     /// Occurs when the user provides a value containing invalid UTF-8.
     ///
     /// To allow arbitrary data
@@ -254,7 +243,6 @@ pub enum ErrorKind {
     ///
     /// [`Command::external_subcommand_value_parser`]: crate::Command::external_subcommand_value_parser
     InvalidUtf8,
-
     /// Not a true "error" as it means `--help` or similar was used.
     /// The help message will be sent to `stdout`.
     ///
@@ -274,7 +262,6 @@ pub enum ErrorKind {
     /// # }
     /// ```
     DisplayHelp,
-
     /// Occurs when either an argument or a [`Subcommand`] is required, as defined by
     /// [`Command::arg_required_else_help`] , but the user did not provide
     /// one.
@@ -298,7 +285,6 @@ pub enum ErrorKind {
     /// [`Subcommand`]: crate::Subcommand
     /// [`Command::arg_required_else_help`]: crate::Command::arg_required_else_help
     DisplayHelpOnMissingArgumentOrSubcommand,
-
     /// Not a true "error" as it means `--version` or similar was used.
     /// The message will be sent to `stdout`.
     ///
@@ -314,13 +300,11 @@ pub enum ErrorKind {
     /// assert_eq!(result.unwrap_err().kind(), ErrorKind::DisplayVersion);
     /// ```
     DisplayVersion,
-
     /// Represents an [I/O error].
     /// Can occur when writing to `stderr` or `stdout` or reading a configuration file.
     ///
     /// [I/O error]: std::io::Error
     Io,
-
     /// Represents a [Format error] (which is a part of [`Display`]).
     /// Typically caused by writing to `stderr` or `stdout`.
     ///
@@ -328,7 +312,6 @@ pub enum ErrorKind {
     /// [Format error]: std::fmt::Error
     Format,
 }
-
 impl ErrorKind {
     /// End-user description of the error case, where relevant
     pub fn as_str(self) -> Option<&'static str> {
@@ -336,19 +319,29 @@ impl ErrorKind {
             Self::InvalidValue => Some("one of the values isn't valid for an argument"),
             Self::UnknownArgument => Some("unexpected argument found"),
             Self::InvalidSubcommand => Some("unrecognized subcommand"),
-            Self::NoEquals => Some("equal is needed when assigning values to one of the arguments"),
+            Self::NoEquals => {
+                Some("equal is needed when assigning values to one of the arguments")
+            }
             Self::ValueValidation => Some("invalid value for one of the arguments"),
             Self::TooManyValues => Some("unexpected value for an argument found"),
             Self::TooFewValues => Some("more values required for an argument"),
-            Self::WrongNumberOfValues => Some("too many or too few values for an argument"),
+            Self::WrongNumberOfValues => {
+                Some("too many or too few values for an argument")
+            }
             Self::ArgumentConflict => {
-                Some("an argument cannot be used with one or more of the other specified arguments")
+                Some(
+                    "an argument cannot be used with one or more of the other specified arguments",
+                )
             }
             Self::MissingRequiredArgument => {
                 Some("one or more required arguments were not provided")
             }
-            Self::MissingSubcommand => Some("a subcommand is required but one was not provided"),
-            Self::InvalidUtf8 => Some("invalid UTF-8 was detected in one or more arguments"),
+            Self::MissingSubcommand => {
+                Some("a subcommand is required but one was not provided")
+            }
+            Self::InvalidUtf8 => {
+                Some("invalid UTF-8 was detected in one or more arguments")
+            }
             Self::DisplayHelp => None,
             Self::DisplayHelpOnMissingArgumentOrSubcommand => None,
             Self::DisplayVersion => None,
@@ -357,7 +350,6 @@ impl ErrorKind {
         }
     }
 }
-
 impl std::fmt::Display for ErrorKind {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         self.as_str().unwrap_or_default().fmt(f)

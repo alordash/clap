@@ -1,12 +1,11 @@
 use crate::builder::StyledStr;
 use crate::util::color::ColorChoice;
-
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub(crate) enum Stream {
     Stdout,
     Stderr,
 }
-
+#[cfg_attr(test, rsubstitute::mock)]
 #[derive(Clone, Debug)]
 pub(crate) struct Colorizer {
     stream: Stream,
@@ -14,7 +13,7 @@ pub(crate) struct Colorizer {
     color_when: ColorChoice,
     content: StyledStr,
 }
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 impl Colorizer {
     pub(crate) fn new(stream: Stream, color_when: ColorChoice) -> Self {
         Colorizer {
@@ -23,13 +22,12 @@ impl Colorizer {
             content: Default::default(),
         }
     }
-
     pub(crate) fn with_content(mut self, content: StyledStr) -> Self {
         self.content = content;
         self
     }
 }
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 /// Printing methods.
 impl Colorizer {
     #[cfg(feature = "color")]
@@ -39,7 +37,6 @@ impl Colorizer {
             ColorChoice::Auto => anstream::ColorChoice::Auto,
             ColorChoice::Never => anstream::ColorChoice::Never,
         };
-
         let mut stdout;
         let mut stderr;
         let writer: &mut dyn std::io::Write = match self.stream {
@@ -52,14 +49,10 @@ impl Colorizer {
                 &mut stdout
             }
         };
-
         self.content.write_to(writer)
     }
-
     #[cfg(not(feature = "color"))]
     pub(crate) fn print(&self) -> std::io::Result<()> {
-        // [e]println can't be used here because it panics
-        // if something went wrong. We don't want that.
         match self.stream {
             Stream::Stdout => {
                 let stdout = std::io::stdout();
@@ -74,7 +67,7 @@ impl Colorizer {
         }
     }
 }
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 /// Color-unaware printing. Never uses coloring.
 impl std::fmt::Display for Colorizer {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {

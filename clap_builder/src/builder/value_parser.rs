@@ -1,12 +1,10 @@
 use std::convert::TryInto;
 use std::ops::RangeBounds;
-
 use crate::builder::Str;
 use crate::builder::StyledStr;
 use crate::parser::ValueSource;
 use crate::util::AnyValue;
 use crate::util::AnyValueId;
-
 /// Parse/validate argument values
 ///
 /// Specified with [`Arg::value_parser`][crate::Arg::value_parser].
@@ -61,19 +59,13 @@ use crate::util::AnyValueId;
 /// assert_eq!(port, 3001);
 /// ```
 pub struct ValueParser(ValueParserInner);
-
 enum ValueParserInner {
-    // Common enough to optimize and for possible values
     Bool,
-    // Common enough to optimize
     String,
-    // Common enough to optimize
     OsString,
-    // Common enough to optimize
     PathBuf,
     Other(Box<dyn AnyValueParser>),
 }
-
 impl ValueParser {
     /// Custom parser for argument values
     ///
@@ -115,7 +107,6 @@ impl ValueParser {
     {
         Self(ValueParserInner::Other(Box::new(other)))
     }
-
     /// [`bool`] parser for argument values
     ///
     /// See also:
@@ -143,7 +134,6 @@ impl ValueParser {
     pub const fn bool() -> Self {
         Self(ValueParserInner::Bool)
     }
-
     /// [`String`] parser for argument values
     ///
     /// See also:
@@ -168,7 +158,6 @@ impl ValueParser {
     pub const fn string() -> Self {
         Self(ValueParserInner::String)
     }
-
     /// [`OsString`][std::ffi::OsString] parser for argument values
     ///
     /// # Example
@@ -200,7 +189,6 @@ impl ValueParser {
     pub const fn os_string() -> Self {
         Self(ValueParserInner::OsString)
     }
-
     /// [`PathBuf`][std::path::PathBuf] parser for argument values
     ///
     /// # Example
@@ -227,7 +215,6 @@ impl ValueParser {
         Self(ValueParserInner::PathBuf)
     }
 }
-
 impl ValueParser {
     /// Parse into a `AnyValue`
     ///
@@ -241,12 +228,10 @@ impl ValueParser {
     ) -> Result<AnyValue, crate::Error> {
         self.any_value_parser().parse_ref_(cmd, arg, value, source)
     }
-
     /// Describes the content of `AnyValue`
     pub fn type_id(&self) -> AnyValueId {
         self.any_value_parser().type_id()
     }
-
     /// Reflect on enumerated value properties
     ///
     /// Error checking should not be done with this; it is mostly targeted at user-facing
@@ -256,7 +241,6 @@ impl ValueParser {
     ) -> Option<Box<dyn Iterator<Item = crate::builder::PossibleValue> + '_>> {
         self.any_value_parser().possible_values()
     }
-
     fn any_value_parser(&self) -> &dyn AnyValueParser {
         match &self.0 {
             ValueParserInner::Bool => &BoolValueParser {},
@@ -267,7 +251,6 @@ impl ValueParser {
         }
     }
 }
-
 /// Convert a [`TypedValueParser`] to [`ValueParser`]
 ///
 /// # Example
@@ -299,13 +282,11 @@ where
         Self::new(p)
     }
 }
-
 impl From<_AnonymousValueParser> for ValueParser {
     fn from(p: _AnonymousValueParser) -> Self {
         p.0
     }
 }
-
 /// Create an `i64` [`ValueParser`] from a `N..M` range
 ///
 /// See [`RangedI64ValueParser`] for more control over the output type.
@@ -336,7 +317,6 @@ impl From<std::ops::Range<i64>> for ValueParser {
         Self::from(inner)
     }
 }
-
 /// Create an `i64` [`ValueParser`] from a `N..=M` range
 ///
 /// See [`RangedI64ValueParser`] for more control over the output type.
@@ -363,11 +343,11 @@ impl From<std::ops::Range<i64>> for ValueParser {
 /// ```
 impl From<std::ops::RangeInclusive<i64>> for ValueParser {
     fn from(value: std::ops::RangeInclusive<i64>) -> Self {
-        let inner = RangedI64ValueParser::<i64>::new().range(value.start()..=value.end());
+        let inner = RangedI64ValueParser::<i64>::new()
+            .range(value.start()..=value.end());
         Self::from(inner)
     }
 }
-
 /// Create an `i64` [`ValueParser`] from a `N..` range
 ///
 /// See [`RangedI64ValueParser`] for more control over the output type.
@@ -398,7 +378,6 @@ impl From<std::ops::RangeFrom<i64>> for ValueParser {
         Self::from(inner)
     }
 }
-
 /// Create an `i64` [`ValueParser`] from a `..M` range
 ///
 /// See [`RangedI64ValueParser`] for more control over the output type.
@@ -429,7 +408,6 @@ impl From<std::ops::RangeTo<i64>> for ValueParser {
         Self::from(inner)
     }
 }
-
 /// Create an `i64` [`ValueParser`] from a `..=M` range
 ///
 /// See [`RangedI64ValueParser`] for more control over the output type.
@@ -460,7 +438,6 @@ impl From<std::ops::RangeToInclusive<i64>> for ValueParser {
         Self::from(inner)
     }
 }
-
 /// Create an `i64` [`ValueParser`] from a `..` range
 ///
 /// See [`RangedI64ValueParser`] for more control over the output type.
@@ -491,7 +468,6 @@ impl From<std::ops::RangeFull> for ValueParser {
         Self::from(inner)
     }
 }
-
 /// Create a [`ValueParser`] with [`PossibleValuesParser`]
 ///
 /// See [`PossibleValuesParser`] for more flexibility in creating the
@@ -526,7 +502,6 @@ where
         Self::from(inner)
     }
 }
-
 /// Create a [`ValueParser`] with [`PossibleValuesParser`]
 ///
 /// See [`PossibleValuesParser`] for more flexibility in creating the
@@ -562,31 +537,35 @@ where
         Self::from(inner)
     }
 }
-
 impl std::fmt::Debug for ValueParser {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
         match &self.0 {
             ValueParserInner::Bool => f.debug_struct("ValueParser::bool").finish(),
             ValueParserInner::String => f.debug_struct("ValueParser::string").finish(),
-            ValueParserInner::OsString => f.debug_struct("ValueParser::os_string").finish(),
+            ValueParserInner::OsString => {
+                f.debug_struct("ValueParser::os_string").finish()
+            }
             ValueParserInner::PathBuf => f.debug_struct("ValueParser::path_buf").finish(),
-            ValueParserInner::Other(o) => write!(f, "ValueParser::other({:?})", o.type_id()),
+            ValueParserInner::Other(o) => {
+                write!(f, "ValueParser::other({:?})", o.type_id())
+            }
         }
     }
 }
-
 impl Clone for ValueParser {
     fn clone(&self) -> Self {
-        Self(match &self.0 {
-            ValueParserInner::Bool => ValueParserInner::Bool,
-            ValueParserInner::String => ValueParserInner::String,
-            ValueParserInner::OsString => ValueParserInner::OsString,
-            ValueParserInner::PathBuf => ValueParserInner::PathBuf,
-            ValueParserInner::Other(o) => ValueParserInner::Other(o.clone_any()),
-        })
+        Self(
+            match &self.0 {
+                ValueParserInner::Bool => ValueParserInner::Bool,
+                ValueParserInner::String => ValueParserInner::String,
+                ValueParserInner::OsString => ValueParserInner::OsString,
+                ValueParserInner::PathBuf => ValueParserInner::PathBuf,
+                ValueParserInner::Other(o) => ValueParserInner::Other(o.clone_any()),
+            },
+        )
     }
 }
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 /// A type-erased wrapper for [`TypedValueParser`].
 trait AnyValueParser: Send + Sync + 'static {
     fn parse_ref(
@@ -595,7 +574,6 @@ trait AnyValueParser: Send + Sync + 'static {
         arg: Option<&crate::Arg>,
         value: &std::ffi::OsStr,
     ) -> Result<AnyValue, crate::Error>;
-
     fn parse_ref_(
         &self,
         cmd: &crate::Command,
@@ -605,17 +583,13 @@ trait AnyValueParser: Send + Sync + 'static {
     ) -> Result<AnyValue, crate::Error> {
         self.parse_ref(cmd, arg, value)
     }
-
     /// Describes the content of `AnyValue`
     fn type_id(&self) -> AnyValueId;
-
     fn possible_values(
         &self,
     ) -> Option<Box<dyn Iterator<Item = crate::builder::PossibleValue> + '_>>;
-
     fn clone_any(&self) -> Box<dyn AnyValueParser>;
 }
-
 impl<T, P> AnyValueParser for P
 where
     T: std::any::Any + Clone + Send + Sync + 'static,
@@ -630,7 +604,6 @@ where
         let value = ok!(TypedValueParser::parse_ref(self, cmd, arg, value));
         Ok(AnyValue::new(value))
     }
-
     fn parse_ref_(
         &self,
         cmd: &crate::Command,
@@ -641,22 +614,19 @@ where
         let value = ok!(TypedValueParser::parse_ref_(self, cmd, arg, value, source));
         Ok(AnyValue::new(value))
     }
-
     fn type_id(&self) -> AnyValueId {
         AnyValueId::of::<T>()
     }
-
     fn possible_values(
         &self,
     ) -> Option<Box<dyn Iterator<Item = crate::builder::PossibleValue> + '_>> {
         P::possible_values(self)
     }
-
     fn clone_any(&self) -> Box<dyn AnyValueParser> {
         Box::new(self.clone())
     }
 }
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 /// Parse/validate argument values
 ///
 /// As alternatives to implementing `TypedValueParser`,
@@ -711,7 +681,6 @@ where
 pub trait TypedValueParser: Clone + Send + Sync + 'static {
     /// Argument's value type
     type Value: Send + Sync + Clone;
-
     /// Parse the argument value
     ///
     /// When `arg` is `None`, an external subcommand value is being parsed.
@@ -721,7 +690,6 @@ pub trait TypedValueParser: Clone + Send + Sync + 'static {
         arg: Option<&crate::Arg>,
         value: &std::ffi::OsStr,
     ) -> Result<Self::Value, crate::Error>;
-
     /// Parse the argument value
     ///
     /// When `arg` is `None`, an external subcommand value is being parsed.
@@ -734,7 +702,6 @@ pub trait TypedValueParser: Clone + Send + Sync + 'static {
     ) -> Result<Self::Value, crate::Error> {
         self.parse_ref(cmd, arg, value)
     }
-
     /// Parse the argument value
     ///
     /// When `arg` is `None`, an external subcommand value is being parsed.
@@ -746,7 +713,6 @@ pub trait TypedValueParser: Clone + Send + Sync + 'static {
     ) -> Result<Self::Value, crate::Error> {
         self.parse_ref(cmd, arg, &value)
     }
-
     /// Parse the argument value
     ///
     /// When `arg` is `None`, an external subcommand value is being parsed.
@@ -759,7 +725,6 @@ pub trait TypedValueParser: Clone + Send + Sync + 'static {
     ) -> Result<Self::Value, crate::Error> {
         self.parse(cmd, arg, value)
     }
-
     /// Reflect on enumerated value properties
     ///
     /// Error checking should not be done with this; it is mostly targeted at user-facing
@@ -769,7 +734,6 @@ pub trait TypedValueParser: Clone + Send + Sync + 'static {
     ) -> Option<Box<dyn Iterator<Item = crate::builder::PossibleValue> + '_>> {
         None
     }
-
     /// Adapt a `TypedValueParser` from one value to another
     ///
     /// # Example
@@ -814,7 +778,6 @@ pub trait TypedValueParser: Clone + Send + Sync + 'static {
     {
         MapValueParser::new(self, func)
     }
-
     /// Adapt a `TypedValueParser` from one value to another
     ///
     /// # Example
@@ -866,7 +829,6 @@ pub trait TypedValueParser: Clone + Send + Sync + 'static {
         TryMapValueParser::new(self, func)
     }
 }
-
 impl<F, T, E> TypedValueParser for F
 where
     F: Fn(&str) -> Result<T, E> + Clone + Send + Sync + 'static,
@@ -874,46 +836,41 @@ where
     T: Send + Sync + Clone,
 {
     type Value = T;
-
     fn parse_ref(
         &self,
         cmd: &crate::Command,
         arg: Option<&crate::Arg>,
         value: &std::ffi::OsStr,
     ) -> Result<Self::Value, crate::Error> {
-        let value = ok!(value.to_str().ok_or_else(|| {
-            crate::Error::invalid_utf8(
-                cmd,
-                crate::output::Usage::new(cmd).create_usage_with_title(&[]),
-            )
-        }));
-        let value = ok!((self)(value).map_err(|e| {
-            let arg = arg
-                .map(|a| a.to_string())
-                .unwrap_or_else(|| "...".to_owned());
-            crate::Error::value_validation(arg, value.to_owned(), e.into()).with_cmd(cmd)
-        }));
+        let value = ok!(
+            value.to_str().ok_or_else(|| { crate ::Error::invalid_utf8(cmd, crate
+            ::output::Usage::new(cmd).create_usage_with_title(& []),) })
+        );
+        let value = ok!(
+            (self) (value).map_err(| e | { let arg = arg.map(| a | a.to_string())
+            .unwrap_or_else(|| "...".to_owned()); crate ::Error::value_validation(arg,
+            value.to_owned(), e.into()).with_cmd(cmd) })
+        );
         Ok(value)
     }
 }
-
+#[cfg_attr(test, rsubstitute::mock)]
 /// Implementation for [`ValueParser::string`]
 ///
 /// Useful for composing new [`TypedValueParser`]s
 #[derive(Copy, Clone, Debug)]
 #[non_exhaustive]
 pub struct StringValueParser {}
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 impl StringValueParser {
     /// Implementation for [`ValueParser::string`]
     pub fn new() -> Self {
         Self {}
     }
 }
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 impl TypedValueParser for StringValueParser {
     type Value = String;
-
     fn parse_ref(
         &self,
         cmd: &crate::Command,
@@ -922,46 +879,42 @@ impl TypedValueParser for StringValueParser {
     ) -> Result<Self::Value, crate::Error> {
         TypedValueParser::parse(self, cmd, arg, value.to_owned())
     }
-
     fn parse(
         &self,
         cmd: &crate::Command,
         _arg: Option<&crate::Arg>,
         value: std::ffi::OsString,
     ) -> Result<Self::Value, crate::Error> {
-        let value = ok!(value.into_string().map_err(|_| {
-            crate::Error::invalid_utf8(
-                cmd,
-                crate::output::Usage::new(cmd).create_usage_with_title(&[]),
-            )
-        }));
+        let value = ok!(
+            value.into_string().map_err(| _ | { crate ::Error::invalid_utf8(cmd, crate
+            ::output::Usage::new(cmd).create_usage_with_title(& []),) })
+        );
         Ok(value)
     }
 }
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 impl Default for StringValueParser {
     fn default() -> Self {
         Self::new()
     }
 }
-
+#[cfg_attr(test, rsubstitute::mock)]
 /// Implementation for [`ValueParser::os_string`]
 ///
 /// Useful for composing new [`TypedValueParser`]s
 #[derive(Copy, Clone, Debug)]
 #[non_exhaustive]
 pub struct OsStringValueParser {}
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 impl OsStringValueParser {
     /// Implementation for [`ValueParser::os_string`]
     pub fn new() -> Self {
         Self {}
     }
 }
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 impl TypedValueParser for OsStringValueParser {
     type Value = std::ffi::OsString;
-
     fn parse_ref(
         &self,
         cmd: &crate::Command,
@@ -970,7 +923,6 @@ impl TypedValueParser for OsStringValueParser {
     ) -> Result<Self::Value, crate::Error> {
         TypedValueParser::parse(self, cmd, arg, value.to_owned())
     }
-
     fn parse(
         &self,
         _cmd: &crate::Command,
@@ -980,30 +932,29 @@ impl TypedValueParser for OsStringValueParser {
         Ok(value)
     }
 }
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 impl Default for OsStringValueParser {
     fn default() -> Self {
         Self::new()
     }
 }
-
+#[cfg_attr(test, rsubstitute::mock)]
 /// Implementation for [`ValueParser::path_buf`]
 ///
 /// Useful for composing new [`TypedValueParser`]s
 #[derive(Copy, Clone, Debug)]
 #[non_exhaustive]
 pub struct PathBufValueParser {}
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 impl PathBufValueParser {
     /// Implementation for [`ValueParser::path_buf`]
     pub fn new() -> Self {
         Self {}
     }
 }
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 impl TypedValueParser for PathBufValueParser {
     type Value = std::path::PathBuf;
-
     fn parse_ref(
         &self,
         cmd: &crate::Command,
@@ -1012,7 +963,6 @@ impl TypedValueParser for PathBufValueParser {
     ) -> Result<Self::Value, crate::Error> {
         TypedValueParser::parse(self, cmd, arg, value.to_owned())
     }
-
     fn parse(
         &self,
         cmd: &crate::Command,
@@ -1020,23 +970,23 @@ impl TypedValueParser for PathBufValueParser {
         value: std::ffi::OsString,
     ) -> Result<Self::Value, crate::Error> {
         if value.is_empty() {
-            return Err(crate::Error::empty_value(
-                cmd,
-                &[],
-                arg.map(ToString::to_string)
-                    .unwrap_or_else(|| "...".to_owned()),
-            ));
+            return Err(
+                crate::Error::empty_value(
+                    cmd,
+                    &[],
+                    arg.map(ToString::to_string).unwrap_or_else(|| "...".to_owned()),
+                ),
+            );
         }
         Ok(Self::Value::from(value))
     }
 }
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 impl Default for PathBufValueParser {
     fn default() -> Self {
         Self::new()
     }
 }
-
 /// Parse an [`ValueEnum`][crate::ValueEnum] value.
 ///
 /// See also:
@@ -1079,7 +1029,6 @@ impl Default for PathBufValueParser {
 pub struct EnumValueParser<E: crate::ValueEnum + Clone + Send + Sync + 'static>(
     std::marker::PhantomData<E>,
 );
-
 impl<E: crate::ValueEnum + Clone + Send + Sync + 'static> EnumValueParser<E> {
     /// Parse an [`ValueEnum`][crate::ValueEnum]
     pub fn new() -> Self {
@@ -1087,10 +1036,9 @@ impl<E: crate::ValueEnum + Clone + Send + Sync + 'static> EnumValueParser<E> {
         Self(phantom)
     }
 }
-
-impl<E: crate::ValueEnum + Clone + Send + Sync + 'static> TypedValueParser for EnumValueParser<E> {
+impl<E: crate::ValueEnum + Clone + Send + Sync + 'static> TypedValueParser
+for EnumValueParser<E> {
     type Value = E;
-
     fn parse_ref(
         &self,
         cmd: &crate::Command,
@@ -1106,53 +1054,33 @@ impl<E: crate::ValueEnum + Clone + Send + Sync + 'static> TypedValueParser for E
                 .map(|v| v.get_name().to_owned())
                 .collect::<Vec<_>>()
         };
-
-        let value = ok!(value.to_str().ok_or_else(|| {
-            crate::Error::invalid_value(
-                cmd,
-                value.to_string_lossy().into_owned(),
-                &possible_vals(),
-                arg.map(ToString::to_string)
-                    .unwrap_or_else(|| "...".to_owned()),
-            )
-        }));
-        let value = ok!(E::value_variants()
-            .iter()
-            .find(|v| {
-                v.to_possible_value()
-                    .expect("ValueEnum::value_variants contains only values with a corresponding ValueEnum::to_possible_value")
-                    .matches(value, ignore_case)
-            })
-            .ok_or_else(|| {
-            crate::Error::invalid_value(
-                cmd,
-                value.to_owned(),
-                &possible_vals(),
-                arg.map(ToString::to_string)
-                    .unwrap_or_else(|| "...".to_owned()),
-            )
-            }))
+        let value = ok!(
+            value.to_str().ok_or_else(|| { crate ::Error::invalid_value(cmd, value
+            .to_string_lossy().into_owned(), & possible_vals(), arg
+            .map(ToString::to_string).unwrap_or_else(|| "...".to_owned()),) })
+        );
+        let value = ok!(
+            E::value_variants().iter().find(| v | { v.to_possible_value()
+            .expect("ValueEnum::value_variants contains only values with a corresponding ValueEnum::to_possible_value")
+            .matches(value, ignore_case) }).ok_or_else(|| { crate
+            ::Error::invalid_value(cmd, value.to_owned(), & possible_vals(), arg
+            .map(ToString::to_string).unwrap_or_else(|| "...".to_owned()),) })
+        )
             .clone();
         Ok(value)
     }
-
     fn possible_values(
         &self,
     ) -> Option<Box<dyn Iterator<Item = crate::builder::PossibleValue> + '_>> {
-        Some(Box::new(
-            E::value_variants()
-                .iter()
-                .filter_map(|v| v.to_possible_value()),
-        ))
+        Some(Box::new(E::value_variants().iter().filter_map(|v| v.to_possible_value())))
     }
 }
-
-impl<E: crate::ValueEnum + Clone + Send + Sync + 'static> Default for EnumValueParser<E> {
+impl<E: crate::ValueEnum + Clone + Send + Sync + 'static> Default
+for EnumValueParser<E> {
     fn default() -> Self {
         Self::new()
     }
 }
-
 /// Verify the value is from an enumerated set of [`PossibleValue`][crate::builder::PossibleValue].
 ///
 /// See also:
@@ -1194,17 +1122,14 @@ impl<E: crate::ValueEnum + Clone + Send + Sync + 'static> Default for EnumValueP
 /// ```
 #[derive(Clone, Debug)]
 pub struct PossibleValuesParser(Vec<super::PossibleValue>);
-
 impl PossibleValuesParser {
     /// Verify the value is from an enumerated set of [`PossibleValue`][crate::builder::PossibleValue].
     pub fn new(values: impl Into<PossibleValuesParser>) -> Self {
         values.into()
     }
 }
-
 impl TypedValueParser for PossibleValuesParser {
     type Value = String;
-
     fn parse_ref(
         &self,
         cmd: &crate::Command,
@@ -1213,20 +1138,16 @@ impl TypedValueParser for PossibleValuesParser {
     ) -> Result<Self::Value, crate::Error> {
         TypedValueParser::parse(self, cmd, arg, value.to_owned())
     }
-
     fn parse(
         &self,
         cmd: &crate::Command,
         arg: Option<&crate::Arg>,
         value: std::ffi::OsString,
     ) -> Result<String, crate::Error> {
-        let value = ok!(value.into_string().map_err(|_| {
-            crate::Error::invalid_utf8(
-                cmd,
-                crate::output::Usage::new(cmd).create_usage_with_title(&[]),
-            )
-        }));
-
+        let value = ok!(
+            value.into_string().map_err(| _ | { crate ::Error::invalid_utf8(cmd, crate
+            ::output::Usage::new(cmd).create_usage_with_title(& []),) })
+        );
         let ignore_case = arg.map(|a| a.is_ignore_case_set()).unwrap_or(false);
         if self.0.iter().any(|v| v.matches(&value, ignore_case)) {
             Ok(value)
@@ -1237,24 +1158,22 @@ impl TypedValueParser for PossibleValuesParser {
                 .filter(|v| !v.is_hide_set())
                 .map(|v| v.get_name().to_owned())
                 .collect::<Vec<_>>();
-
-            Err(crate::Error::invalid_value(
-                cmd,
-                value,
-                &possible_vals,
-                arg.map(ToString::to_string)
-                    .unwrap_or_else(|| "...".to_owned()),
-            ))
+            Err(
+                crate::Error::invalid_value(
+                    cmd,
+                    value,
+                    &possible_vals,
+                    arg.map(ToString::to_string).unwrap_or_else(|| "...".to_owned()),
+                ),
+            )
         }
     }
-
     fn possible_values(
         &self,
     ) -> Option<Box<dyn Iterator<Item = crate::builder::PossibleValue> + '_>> {
         Some(Box::new(self.0.iter().cloned()))
     }
 }
-
 impl<I, T> From<I> for PossibleValuesParser
 where
     I: IntoIterator<Item = T>,
@@ -1264,7 +1183,7 @@ where
         Self(values.into_iter().map(|t| t.into()).collect())
     }
 }
-
+#[cfg_attr(test, rsubstitute::mock)]
 /// Parse number that fall within a range of values
 ///
 /// <div class="warning">
@@ -1316,33 +1235,24 @@ pub struct RangedI64ValueParser<T: TryFrom<i64> + Clone + Send + Sync = i64> {
     bounds: (std::ops::Bound<i64>, std::ops::Bound<i64>),
     target: std::marker::PhantomData<T>,
 }
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 impl<T: TryFrom<i64> + Clone + Send + Sync> RangedI64ValueParser<T> {
     /// Select full range of `i64`
     pub fn new() -> Self {
         Self::from(..)
     }
-
     /// Narrow the supported range
     pub fn range<B: RangeBounds<i64>>(mut self, range: B) -> Self {
-        // Consideration: when the user does `value_parser!(u8).range()`
-        // - Avoid programming mistakes by accidentally expanding the range
-        // - Make it convenient to limit the range like with `..10`
         let start = match range.start_bound() {
             l @ std::ops::Bound::Included(i) => {
                 debug_assert!(
-                    self.bounds.contains(i),
-                    "{} must be in {:?}",
-                    i,
-                    self.bounds
+                    self.bounds.contains(i), "{} must be in {:?}", i, self.bounds
                 );
                 l.cloned()
             }
             l @ std::ops::Bound::Excluded(i) => {
                 debug_assert!(
-                    self.bounds.contains(&i.saturating_add(1)),
-                    "{} must be in {:?}",
-                    i,
+                    self.bounds.contains(& i.saturating_add(1)), "{} must be in {:?}", i,
                     self.bounds
                 );
                 l.cloned()
@@ -1352,18 +1262,13 @@ impl<T: TryFrom<i64> + Clone + Send + Sync> RangedI64ValueParser<T> {
         let end = match range.end_bound() {
             l @ std::ops::Bound::Included(i) => {
                 debug_assert!(
-                    self.bounds.contains(i),
-                    "{} must be in {:?}",
-                    i,
-                    self.bounds
+                    self.bounds.contains(i), "{} must be in {:?}", i, self.bounds
                 );
                 l.cloned()
             }
             l @ std::ops::Bound::Excluded(i) => {
                 debug_assert!(
-                    self.bounds.contains(&i.saturating_sub(1)),
-                    "{} must be in {:?}",
-                    i,
+                    self.bounds.contains(& i.saturating_sub(1)), "{} must be in {:?}", i,
                     self.bounds
                 );
                 l.cloned()
@@ -1373,7 +1278,6 @@ impl<T: TryFrom<i64> + Clone + Send + Sync> RangedI64ValueParser<T> {
         self.bounds = (start, end);
         self
     }
-
     fn format_bounds(&self) -> String {
         let mut result = match self.bounds.0 {
             std::ops::Bound::Included(i) => i.to_string(),
@@ -1396,68 +1300,52 @@ impl<T: TryFrom<i64> + Clone + Send + Sync> RangedI64ValueParser<T> {
         result
     }
 }
-
-impl<T: TryFrom<i64> + Clone + Send + Sync + 'static> TypedValueParser for RangedI64ValueParser<T>
+#[cfg_attr(test, rsubstitute::mock(base))]
+impl<T: TryFrom<i64> + Clone + Send + Sync + 'static> TypedValueParser
+for RangedI64ValueParser<T>
 where
     <T as TryFrom<i64>>::Error: Send + Sync + 'static + std::error::Error + ToString,
 {
     type Value = T;
-
     fn parse_ref(
         &self,
         cmd: &crate::Command,
         arg: Option<&crate::Arg>,
         raw_value: &std::ffi::OsStr,
     ) -> Result<Self::Value, crate::Error> {
-        let value = ok!(raw_value.to_str().ok_or_else(|| {
-            crate::Error::invalid_utf8(
-                cmd,
-                crate::output::Usage::new(cmd).create_usage_with_title(&[]),
-            )
-        }));
-        let value = ok!(value.parse::<i64>().map_err(|err| {
-            let arg = arg
-                .map(|a| a.to_string())
-                .unwrap_or_else(|| "...".to_owned());
-            crate::Error::value_validation(
-                arg,
-                raw_value.to_string_lossy().into_owned(),
-                err.into(),
-            )
-            .with_cmd(cmd)
-        }));
+        let value = ok!(
+            raw_value.to_str().ok_or_else(|| { crate ::Error::invalid_utf8(cmd, crate
+            ::output::Usage::new(cmd).create_usage_with_title(& []),) })
+        );
+        let value = ok!(
+            value.parse::< i64 > ().map_err(| err | { let arg = arg.map(| a | a
+            .to_string()).unwrap_or_else(|| "...".to_owned()); crate
+            ::Error::value_validation(arg, raw_value.to_string_lossy().into_owned(), err
+            .into(),).with_cmd(cmd) })
+        );
         if !self.bounds.contains(&value) {
-            let arg = arg
-                .map(|a| a.to_string())
-                .unwrap_or_else(|| "...".to_owned());
-            return Err(crate::Error::value_validation(
-                arg,
-                raw_value.to_string_lossy().into_owned(),
-                format!("{} is not in {}", value, self.format_bounds()).into(),
-            )
-            .with_cmd(cmd));
+            let arg = arg.map(|a| a.to_string()).unwrap_or_else(|| "...".to_owned());
+            return Err(
+                crate::Error::value_validation(
+                        arg,
+                        raw_value.to_string_lossy().into_owned(),
+                        format!("{} is not in {}", value, self.format_bounds()).into(),
+                    )
+                    .with_cmd(cmd),
+            );
         }
-
         let value: Result<Self::Value, _> = value.try_into();
-        let value = ok!(value.map_err(|err| {
-            let arg = arg
-                .map(|a| a.to_string())
-                .unwrap_or_else(|| "...".to_owned());
-            crate::Error::value_validation(
-                arg,
-                raw_value.to_string_lossy().into_owned(),
-                err.into(),
-            )
-            .with_cmd(cmd)
-        }));
-
+        let value = ok!(
+            value.map_err(| err | { let arg = arg.map(| a | a.to_string())
+            .unwrap_or_else(|| "...".to_owned()); crate ::Error::value_validation(arg,
+            raw_value.to_string_lossy().into_owned(), err.into(),).with_cmd(cmd) })
+        );
         Ok(value)
     }
 }
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 impl<T: TryFrom<i64> + Clone + Send + Sync, B: RangeBounds<i64>> From<B>
-    for RangedI64ValueParser<T>
-{
+for RangedI64ValueParser<T> {
     fn from(range: B) -> Self {
         Self {
             bounds: (range.start_bound().cloned(), range.end_bound().cloned()),
@@ -1465,13 +1353,13 @@ impl<T: TryFrom<i64> + Clone + Send + Sync, B: RangeBounds<i64>> From<B>
         }
     }
 }
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 impl<T: TryFrom<i64> + Clone + Send + Sync> Default for RangedI64ValueParser<T> {
     fn default() -> Self {
         Self::new()
     }
 }
-
+#[cfg_attr(test, rsubstitute::mock)]
 /// Parse number that fall within a range of values
 ///
 /// # Example
@@ -1515,33 +1403,24 @@ pub struct RangedU64ValueParser<T: TryFrom<u64> = u64> {
     bounds: (std::ops::Bound<u64>, std::ops::Bound<u64>),
     target: std::marker::PhantomData<T>,
 }
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 impl<T: TryFrom<u64>> RangedU64ValueParser<T> {
     /// Select full range of `u64`
     pub fn new() -> Self {
         Self::from(..)
     }
-
     /// Narrow the supported range
     pub fn range<B: RangeBounds<u64>>(mut self, range: B) -> Self {
-        // Consideration: when the user does `value_parser!(u8).range()`
-        // - Avoid programming mistakes by accidentally expanding the range
-        // - Make it convenient to limit the range like with `..10`
         let start = match range.start_bound() {
             l @ std::ops::Bound::Included(i) => {
                 debug_assert!(
-                    self.bounds.contains(i),
-                    "{} must be in {:?}",
-                    i,
-                    self.bounds
+                    self.bounds.contains(i), "{} must be in {:?}", i, self.bounds
                 );
                 l.cloned()
             }
             l @ std::ops::Bound::Excluded(i) => {
                 debug_assert!(
-                    self.bounds.contains(&i.saturating_add(1)),
-                    "{} must be in {:?}",
-                    i,
+                    self.bounds.contains(& i.saturating_add(1)), "{} must be in {:?}", i,
                     self.bounds
                 );
                 l.cloned()
@@ -1551,18 +1430,13 @@ impl<T: TryFrom<u64>> RangedU64ValueParser<T> {
         let end = match range.end_bound() {
             l @ std::ops::Bound::Included(i) => {
                 debug_assert!(
-                    self.bounds.contains(i),
-                    "{} must be in {:?}",
-                    i,
-                    self.bounds
+                    self.bounds.contains(i), "{} must be in {:?}", i, self.bounds
                 );
                 l.cloned()
             }
             l @ std::ops::Bound::Excluded(i) => {
                 debug_assert!(
-                    self.bounds.contains(&i.saturating_sub(1)),
-                    "{} must be in {:?}",
-                    i,
+                    self.bounds.contains(& i.saturating_sub(1)), "{} must be in {:?}", i,
                     self.bounds
                 );
                 l.cloned()
@@ -1572,7 +1446,6 @@ impl<T: TryFrom<u64>> RangedU64ValueParser<T> {
         self.bounds = (start, end);
         self
     }
-
     fn format_bounds(&self) -> String {
         let mut result = match self.bounds.0 {
             std::ops::Bound::Included(i) => i.to_string(),
@@ -1595,65 +1468,50 @@ impl<T: TryFrom<u64>> RangedU64ValueParser<T> {
         result
     }
 }
-
-impl<T: TryFrom<u64> + Clone + Send + Sync + 'static> TypedValueParser for RangedU64ValueParser<T>
+#[cfg_attr(test, rsubstitute::mock(base))]
+impl<T: TryFrom<u64> + Clone + Send + Sync + 'static> TypedValueParser
+for RangedU64ValueParser<T>
 where
     <T as TryFrom<u64>>::Error: Send + Sync + 'static + std::error::Error + ToString,
 {
     type Value = T;
-
     fn parse_ref(
         &self,
         cmd: &crate::Command,
         arg: Option<&crate::Arg>,
         raw_value: &std::ffi::OsStr,
     ) -> Result<Self::Value, crate::Error> {
-        let value = ok!(raw_value.to_str().ok_or_else(|| {
-            crate::Error::invalid_utf8(
-                cmd,
-                crate::output::Usage::new(cmd).create_usage_with_title(&[]),
-            )
-        }));
-        let value = ok!(value.parse::<u64>().map_err(|err| {
-            let arg = arg
-                .map(|a| a.to_string())
-                .unwrap_or_else(|| "...".to_owned());
-            crate::Error::value_validation(
-                arg,
-                raw_value.to_string_lossy().into_owned(),
-                err.into(),
-            )
-            .with_cmd(cmd)
-        }));
+        let value = ok!(
+            raw_value.to_str().ok_or_else(|| { crate ::Error::invalid_utf8(cmd, crate
+            ::output::Usage::new(cmd).create_usage_with_title(& []),) })
+        );
+        let value = ok!(
+            value.parse::< u64 > ().map_err(| err | { let arg = arg.map(| a | a
+            .to_string()).unwrap_or_else(|| "...".to_owned()); crate
+            ::Error::value_validation(arg, raw_value.to_string_lossy().into_owned(), err
+            .into(),).with_cmd(cmd) })
+        );
         if !self.bounds.contains(&value) {
-            let arg = arg
-                .map(|a| a.to_string())
-                .unwrap_or_else(|| "...".to_owned());
-            return Err(crate::Error::value_validation(
-                arg,
-                raw_value.to_string_lossy().into_owned(),
-                format!("{} is not in {}", value, self.format_bounds()).into(),
-            )
-            .with_cmd(cmd));
+            let arg = arg.map(|a| a.to_string()).unwrap_or_else(|| "...".to_owned());
+            return Err(
+                crate::Error::value_validation(
+                        arg,
+                        raw_value.to_string_lossy().into_owned(),
+                        format!("{} is not in {}", value, self.format_bounds()).into(),
+                    )
+                    .with_cmd(cmd),
+            );
         }
-
         let value: Result<Self::Value, _> = value.try_into();
-        let value = ok!(value.map_err(|err| {
-            let arg = arg
-                .map(|a| a.to_string())
-                .unwrap_or_else(|| "...".to_owned());
-            crate::Error::value_validation(
-                arg,
-                raw_value.to_string_lossy().into_owned(),
-                err.into(),
-            )
-            .with_cmd(cmd)
-        }));
-
+        let value = ok!(
+            value.map_err(| err | { let arg = arg.map(| a | a.to_string())
+            .unwrap_or_else(|| "...".to_owned()); crate ::Error::value_validation(arg,
+            raw_value.to_string_lossy().into_owned(), err.into(),).with_cmd(cmd) })
+        );
         Ok(value)
     }
 }
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 impl<T: TryFrom<u64>, B: RangeBounds<u64>> From<B> for RangedU64ValueParser<T> {
     fn from(range: B) -> Self {
         Self {
@@ -1662,37 +1520,32 @@ impl<T: TryFrom<u64>, B: RangeBounds<u64>> From<B> for RangedU64ValueParser<T> {
         }
     }
 }
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 impl<T: TryFrom<u64>> Default for RangedU64ValueParser<T> {
     fn default() -> Self {
         Self::new()
     }
 }
-
+#[cfg_attr(test, rsubstitute::mock)]
 /// Implementation for [`ValueParser::bool`]
 ///
 /// Useful for composing new [`TypedValueParser`]s
 #[derive(Copy, Clone, Debug)]
 #[non_exhaustive]
 pub struct BoolValueParser {}
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 impl BoolValueParser {
     /// Implementation for [`ValueParser::bool`]
     pub fn new() -> Self {
         Self {}
     }
-
     fn possible_values() -> impl Iterator<Item = crate::builder::PossibleValue> {
-        ["true", "false"]
-            .iter()
-            .copied()
-            .map(crate::builder::PossibleValue::new)
+        ["true", "false"].iter().copied().map(crate::builder::PossibleValue::new)
     }
 }
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 impl TypedValueParser for BoolValueParser {
     type Value = bool;
-
     fn parse_ref(
         &self,
         cmd: &crate::Command,
@@ -1704,35 +1557,33 @@ impl TypedValueParser for BoolValueParser {
         } else if value == std::ffi::OsStr::new("false") {
             false
         } else {
-            // Intentionally showing hidden as we hide all of them
             let possible_vals = Self::possible_values()
                 .map(|v| v.get_name().to_owned())
                 .collect::<Vec<_>>();
-
-            return Err(crate::Error::invalid_value(
-                cmd,
-                value.to_string_lossy().into_owned(),
-                &possible_vals,
-                arg.map(ToString::to_string)
-                    .unwrap_or_else(|| "...".to_owned()),
-            ));
+            return Err(
+                crate::Error::invalid_value(
+                    cmd,
+                    value.to_string_lossy().into_owned(),
+                    &possible_vals,
+                    arg.map(ToString::to_string).unwrap_or_else(|| "...".to_owned()),
+                ),
+            );
         };
         Ok(value)
     }
-
     fn possible_values(
         &self,
     ) -> Option<Box<dyn Iterator<Item = crate::builder::PossibleValue> + '_>> {
         Some(Box::new(Self::possible_values()))
     }
 }
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 impl Default for BoolValueParser {
     fn default() -> Self {
         Self::new()
     }
 }
-
+#[cfg_attr(test, rsubstitute::mock)]
 /// Parse false-like string values, everything else is `true`
 ///
 /// See also:
@@ -1776,37 +1627,35 @@ impl Default for BoolValueParser {
 #[derive(Copy, Clone, Debug)]
 #[non_exhaustive]
 pub struct FalseyValueParser {}
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 impl FalseyValueParser {
     /// Parse false-like string values, everything else is `true`
     pub fn new() -> Self {
         Self {}
     }
-
     fn possible_values() -> impl Iterator<Item = crate::builder::PossibleValue> {
         crate::util::TRUE_LITERALS
             .iter()
             .chain(crate::util::FALSE_LITERALS.iter())
             .copied()
-            .map(|l| crate::builder::PossibleValue::new(l).hide(l != "true" && l != "false"))
+            .map(|l| {
+                crate::builder::PossibleValue::new(l).hide(l != "true" && l != "false")
+            })
     }
 }
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 impl TypedValueParser for FalseyValueParser {
     type Value = bool;
-
     fn parse_ref(
         &self,
         cmd: &crate::Command,
         _arg: Option<&crate::Arg>,
         value: &std::ffi::OsStr,
     ) -> Result<Self::Value, crate::Error> {
-        let value = ok!(value.to_str().ok_or_else(|| {
-            crate::Error::invalid_utf8(
-                cmd,
-                crate::output::Usage::new(cmd).create_usage_with_title(&[]),
-            )
-        }));
+        let value = ok!(
+            value.to_str().ok_or_else(|| { crate ::Error::invalid_utf8(cmd, crate
+            ::output::Usage::new(cmd).create_usage_with_title(& []),) })
+        );
         let value = if value.is_empty() {
             false
         } else {
@@ -1814,20 +1663,19 @@ impl TypedValueParser for FalseyValueParser {
         };
         Ok(value)
     }
-
     fn possible_values(
         &self,
     ) -> Option<Box<dyn Iterator<Item = crate::builder::PossibleValue> + '_>> {
         Some(Box::new(Self::possible_values()))
     }
 }
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 impl Default for FalseyValueParser {
     fn default() -> Self {
         Self::new()
     }
 }
-
+#[cfg_attr(test, rsubstitute::mock)]
 /// Parse bool-like string values
 ///
 /// See also:
@@ -1875,60 +1723,56 @@ impl Default for FalseyValueParser {
 #[derive(Copy, Clone, Debug)]
 #[non_exhaustive]
 pub struct BoolishValueParser {}
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 impl BoolishValueParser {
     /// Parse bool-like string values
     pub fn new() -> Self {
         Self {}
     }
-
     fn possible_values() -> impl Iterator<Item = crate::builder::PossibleValue> {
         crate::util::TRUE_LITERALS
             .iter()
             .chain(crate::util::FALSE_LITERALS.iter())
             .copied()
-            .map(|l| crate::builder::PossibleValue::new(l).hide(l != "true" && l != "false"))
+            .map(|l| {
+                crate::builder::PossibleValue::new(l).hide(l != "true" && l != "false")
+            })
     }
 }
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 impl TypedValueParser for BoolishValueParser {
     type Value = bool;
-
     fn parse_ref(
         &self,
         cmd: &crate::Command,
         arg: Option<&crate::Arg>,
         value: &std::ffi::OsStr,
     ) -> Result<Self::Value, crate::Error> {
-        let value = ok!(value.to_str().ok_or_else(|| {
-            crate::Error::invalid_utf8(
-                cmd,
-                crate::output::Usage::new(cmd).create_usage_with_title(&[]),
-            )
-        }));
-        let value = ok!(crate::util::str_to_bool(value).ok_or_else(|| {
-            let arg = arg
-                .map(|a| a.to_string())
-                .unwrap_or_else(|| "...".to_owned());
-            crate::Error::value_validation(arg, value.to_owned(), "value was not a boolean".into())
-                .with_cmd(cmd)
-        }));
+        let value = ok!(
+            value.to_str().ok_or_else(|| { crate ::Error::invalid_utf8(cmd, crate
+            ::output::Usage::new(cmd).create_usage_with_title(& []),) })
+        );
+        let value = ok!(
+            crate ::util::str_to_bool(value).ok_or_else(|| { let arg = arg.map(| a | a
+            .to_string()).unwrap_or_else(|| "...".to_owned()); crate
+            ::Error::value_validation(arg, value.to_owned(), "value was not a boolean"
+            .into()).with_cmd(cmd) })
+        );
         Ok(value)
     }
-
     fn possible_values(
         &self,
     ) -> Option<Box<dyn Iterator<Item = crate::builder::PossibleValue> + '_>> {
         Some(Box::new(Self::possible_values()))
     }
 }
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 impl Default for BoolishValueParser {
     fn default() -> Self {
         Self::new()
     }
 }
-
+#[cfg_attr(test, rsubstitute::mock)]
 /// Parse non-empty string values
 ///
 /// See also:
@@ -1966,17 +1810,16 @@ impl Default for BoolishValueParser {
 #[derive(Copy, Clone, Debug)]
 #[non_exhaustive]
 pub struct NonEmptyStringValueParser {}
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 impl NonEmptyStringValueParser {
     /// Parse non-empty string values
     pub fn new() -> Self {
         Self {}
     }
 }
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 impl TypedValueParser for NonEmptyStringValueParser {
     type Value = String;
-
     fn parse_ref(
         &self,
         cmd: &crate::Command,
@@ -1984,29 +1827,28 @@ impl TypedValueParser for NonEmptyStringValueParser {
         value: &std::ffi::OsStr,
     ) -> Result<Self::Value, crate::Error> {
         if value.is_empty() {
-            return Err(crate::Error::empty_value(
-                cmd,
-                &[],
-                arg.map(ToString::to_string)
-                    .unwrap_or_else(|| "...".to_owned()),
-            ));
+            return Err(
+                crate::Error::empty_value(
+                    cmd,
+                    &[],
+                    arg.map(ToString::to_string).unwrap_or_else(|| "...".to_owned()),
+                ),
+            );
         }
-        let value = ok!(value.to_str().ok_or_else(|| {
-            crate::Error::invalid_utf8(
-                cmd,
-                crate::output::Usage::new(cmd).create_usage_with_title(&[]),
-            )
-        }));
+        let value = ok!(
+            value.to_str().ok_or_else(|| { crate ::Error::invalid_utf8(cmd, crate
+            ::output::Usage::new(cmd).create_usage_with_title(& []),) })
+        );
         Ok(value.to_owned())
     }
 }
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 impl Default for NonEmptyStringValueParser {
     fn default() -> Self {
         Self::new()
     }
 }
-
+#[cfg_attr(test, rsubstitute::mock)]
 /// Adapt a `TypedValueParser` from one value to another
 ///
 /// See [`TypedValueParser::map`]
@@ -2015,7 +1857,7 @@ pub struct MapValueParser<P, F> {
     parser: P,
     func: F,
 }
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 impl<P, F, T> MapValueParser<P, F>
 where
     P: TypedValueParser,
@@ -2027,7 +1869,7 @@ where
         Self { parser, func }
     }
 }
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 impl<P, F, T> TypedValueParser for MapValueParser<P, F>
 where
     P: TypedValueParser,
@@ -2036,7 +1878,6 @@ where
     T: Send + Sync + Clone,
 {
     type Value = T;
-
     fn parse_ref(
         &self,
         cmd: &crate::Command,
@@ -2047,7 +1888,6 @@ where
         let value = (self.func)(value);
         Ok(value)
     }
-
     fn parse(
         &self,
         cmd: &crate::Command,
@@ -2058,14 +1898,13 @@ where
         let value = (self.func)(value);
         Ok(value)
     }
-
     fn possible_values(
         &self,
     ) -> Option<Box<dyn Iterator<Item = crate::builder::PossibleValue> + '_>> {
         self.parser.possible_values()
     }
 }
-
+#[cfg_attr(test, rsubstitute::mock)]
 /// Adapt a `TypedValueParser` from one value to another
 ///
 /// See [`TypedValueParser::try_map`]
@@ -2074,7 +1913,7 @@ pub struct TryMapValueParser<P, F> {
     parser: P,
     func: F,
 }
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 impl<P, F, T, E> TryMapValueParser<P, F>
 where
     P: TypedValueParser,
@@ -2087,7 +1926,7 @@ where
         Self { parser, func }
     }
 }
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 impl<P, F, T, E> TypedValueParser for TryMapValueParser<P, F>
 where
     P: TypedValueParser,
@@ -2097,7 +1936,6 @@ where
     E: Into<Box<dyn std::error::Error + Send + Sync + 'static>>,
 {
     type Value = T;
-
     fn parse_ref(
         &self,
         cmd: &crate::Command,
@@ -2105,23 +1943,21 @@ where
         value: &std::ffi::OsStr,
     ) -> Result<Self::Value, crate::Error> {
         let mid_value = ok!(self.parser.parse_ref(cmd, arg, value));
-        let value = ok!((self.func)(mid_value).map_err(|e| {
-            let arg = arg
-                .map(|a| a.to_string())
-                .unwrap_or_else(|| "...".to_owned());
-            crate::Error::value_validation(arg, value.to_string_lossy().into_owned(), e.into())
-                .with_cmd(cmd)
-        }));
+        let value = ok!(
+            (self.func) (mid_value).map_err(| e | { let arg = arg.map(| a | a
+            .to_string()).unwrap_or_else(|| "...".to_owned()); crate
+            ::Error::value_validation(arg, value.to_string_lossy().into_owned(), e
+            .into()).with_cmd(cmd) })
+        );
         Ok(value)
     }
-
     fn possible_values(
         &self,
     ) -> Option<Box<dyn Iterator<Item = crate::builder::PossibleValue> + '_>> {
         self.parser.possible_values()
     }
 }
-
+#[cfg_attr(test, rsubstitute::mock)]
 /// When encountered, report [`ErrorKind::UnknownArgument`][crate::error::ErrorKind::UnknownArgument]
 ///
 /// Useful to help users migrate, either from old versions or similar tools.
@@ -2160,7 +1996,7 @@ pub struct UnknownArgumentValueParser {
     arg: Option<Str>,
     suggestions: Vec<StyledStr>,
 }
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 impl UnknownArgumentValueParser {
     /// Suggest an alternative argument
     pub fn suggest_arg(arg: impl Into<Str>) -> Self {
@@ -2169,7 +2005,6 @@ impl UnknownArgumentValueParser {
             suggestions: Default::default(),
         }
     }
-
     /// Provide a general suggestion
     pub fn suggest(text: impl Into<StyledStr>) -> Self {
         Self {
@@ -2177,17 +2012,15 @@ impl UnknownArgumentValueParser {
             suggestions: vec![text.into()],
         }
     }
-
     /// Extend the suggestions
     pub fn and_suggest(mut self, text: impl Into<StyledStr>) -> Self {
         self.suggestions.push(text.into());
         self
     }
 }
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 impl TypedValueParser for UnknownArgumentValueParser {
     type Value = String;
-
     fn parse_ref(
         &self,
         cmd: &crate::Command,
@@ -2196,7 +2029,6 @@ impl TypedValueParser for UnknownArgumentValueParser {
     ) -> Result<Self::Value, crate::Error> {
         TypedValueParser::parse_ref_(self, cmd, arg, value, ValueSource::CommandLine)
     }
-
     fn parse_ref_(
         &self,
         cmd: &crate::Command,
@@ -2206,7 +2038,13 @@ impl TypedValueParser for UnknownArgumentValueParser {
     ) -> Result<Self::Value, crate::Error> {
         match source {
             ValueSource::DefaultValue => {
-                TypedValueParser::parse_ref_(&StringValueParser::new(), cmd, arg, _value, source)
+                TypedValueParser::parse_ref_(
+                    &StringValueParser::new(),
+                    cmd,
+                    arg,
+                    _value,
+                    source,
+                )
             }
             ValueSource::EnvVariable | ValueSource::CommandLine => {
                 let arg = match arg {
@@ -2223,8 +2061,7 @@ impl TypedValueParser for UnknownArgumentValueParser {
                 #[cfg(feature = "error-context")]
                 let err = {
                     debug_assert_eq!(
-                        err.get(crate::error::ContextKind::Suggested),
-                        None,
+                        err.get(crate ::error::ContextKind::Suggested), None,
                         "Assuming `Error::unknown_argument` doesn't apply any `Suggested` so we can without caution"
                     );
                     err.insert_context_unchecked(
@@ -2237,7 +2074,7 @@ impl TypedValueParser for UnknownArgumentValueParser {
         }
     }
 }
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 /// Register a type with [`value_parser!`][crate::value_parser!]
 ///
 /// # Example
@@ -2279,14 +2116,13 @@ pub trait ValueParserFactory {
     /// It should at least be a type that supports `Into<ValueParser>`.  A non-`ValueParser` type
     /// allows the caller to do further initialization on the parser.
     type Parser;
-
     /// Create the specified [`Self::Parser`]
     fn value_parser() -> Self::Parser;
 }
 impl ValueParserFactory for String {
     type Parser = ValueParser;
     fn value_parser() -> Self::Parser {
-        ValueParser::string() // Default `clap_derive` to optimized implementation
+        ValueParser::string()
     }
 }
 impl ValueParserFactory for Box<str> {
@@ -2298,12 +2134,14 @@ impl ValueParserFactory for Box<str> {
 impl ValueParserFactory for std::ffi::OsString {
     type Parser = ValueParser;
     fn value_parser() -> Self::Parser {
-        ValueParser::os_string() // Default `clap_derive` to optimized implementation
+        ValueParser::os_string()
     }
 }
 impl ValueParserFactory for Box<std::ffi::OsStr> {
-    type Parser =
-        MapValueParser<OsStringValueParser, fn(std::ffi::OsString) -> Box<std::ffi::OsStr>>;
+    type Parser = MapValueParser<
+        OsStringValueParser,
+        fn(std::ffi::OsString) -> Box<std::ffi::OsStr>,
+    >;
     fn value_parser() -> Self::Parser {
         OsStringValueParser::new().map(std::ffi::OsString::into_boxed_os_str)
     }
@@ -2311,12 +2149,14 @@ impl ValueParserFactory for Box<std::ffi::OsStr> {
 impl ValueParserFactory for std::path::PathBuf {
     type Parser = ValueParser;
     fn value_parser() -> Self::Parser {
-        ValueParser::path_buf() // Default `clap_derive` to optimized implementation
+        ValueParser::path_buf()
     }
 }
 impl ValueParserFactory for Box<std::path::Path> {
-    type Parser =
-        MapValueParser<PathBufValueParser, fn(std::path::PathBuf) -> Box<std::path::Path>>;
+    type Parser = MapValueParser<
+        PathBufValueParser,
+        fn(std::path::PathBuf) -> Box<std::path::Path>,
+    >;
     fn value_parser() -> Self::Parser {
         PathBufValueParser::new().map(std::path::PathBuf::into_boxed_path)
     }
@@ -2324,7 +2164,7 @@ impl ValueParserFactory for Box<std::path::Path> {
 impl ValueParserFactory for bool {
     type Parser = ValueParser;
     fn value_parser() -> Self::Parser {
-        ValueParser::bool() // Default `clap_derive` to optimized implementation
+        ValueParser::bool()
     }
 }
 impl ValueParserFactory for u8 {
@@ -2393,8 +2233,10 @@ where
     <T as ValueParserFactory>::Parser: TypedValueParser<Value = T>,
     T: Send + Sync + Clone,
 {
-    type Parser =
-        MapValueParser<<T as ValueParserFactory>::Parser, fn(T) -> std::num::Saturating<T>>;
+    type Parser = MapValueParser<
+        <T as ValueParserFactory>::Parser,
+        fn(T) -> std::num::Saturating<T>,
+    >;
     fn value_parser() -> Self::Parser {
         T::value_parser().map(std::num::Saturating)
     }
@@ -2405,7 +2247,10 @@ where
     <T as ValueParserFactory>::Parser: TypedValueParser<Value = T>,
     T: Send + Sync + Clone,
 {
-    type Parser = MapValueParser<<T as ValueParserFactory>::Parser, fn(T) -> std::num::Wrapping<T>>;
+    type Parser = MapValueParser<
+        <T as ValueParserFactory>::Parser,
+        fn(T) -> std::num::Wrapping<T>,
+    >;
     fn value_parser() -> Self::Parser {
         T::value_parser().map(std::num::Wrapping)
     }
@@ -2427,17 +2272,18 @@ where
     <T as ValueParserFactory>::Parser: TypedValueParser<Value = T>,
     T: Send + Sync + Clone,
 {
-    type Parser = MapValueParser<<T as ValueParserFactory>::Parser, fn(T) -> std::sync::Arc<T>>;
+    type Parser = MapValueParser<
+        <T as ValueParserFactory>::Parser,
+        fn(T) -> std::sync::Arc<T>,
+    >;
     fn value_parser() -> Self::Parser {
         T::value_parser().map(std::sync::Arc::new)
     }
 }
-
 #[doc(hidden)]
 #[derive(Debug)]
 #[allow(non_camel_case_types)]
 pub struct _infer_ValueParser_for<T>(std::marker::PhantomData<T>);
-
 impl<T> _infer_ValueParser_for<T> {
     #[doc(hidden)]
     #[allow(clippy::new_without_default)]
@@ -2445,48 +2291,44 @@ impl<T> _infer_ValueParser_for<T> {
         Self(Default::default())
     }
 }
-
 /// Unstable [`ValueParser`]
 ///
 /// Implementation may change to more specific instance in the future
 #[doc(hidden)]
 #[derive(Debug)]
 pub struct _AnonymousValueParser(ValueParser);
-
 #[doc(hidden)]
 pub mod impl_prelude {
     use super::*;
-
+    #[cfg_attr(test, rsubstitute::mock(base))]
     #[doc(hidden)]
     #[allow(non_camel_case_types)]
     pub trait _impls_ValueParserFactory: private::_impls_ValueParserFactorySealed {
         type Parser;
         fn value_parser(&self) -> Self::Parser;
     }
-    impl<P: ValueParserFactory> _impls_ValueParserFactory for &&&&&&_infer_ValueParser_for<P> {
+    impl<P: ValueParserFactory> _impls_ValueParserFactory
+    for &&&&&&_infer_ValueParser_for<P> {
         type Parser = P::Parser;
         fn value_parser(&self) -> Self::Parser {
             P::value_parser()
         }
     }
-
+    #[cfg_attr(test, rsubstitute::mock(base))]
     #[doc(hidden)]
     #[allow(non_camel_case_types)]
     pub trait _impls_ValueEnum: private::_impls_ValueEnumSealed {
         type Output;
-
         fn value_parser(&self) -> Self::Output;
     }
     impl<E: crate::ValueEnum + Clone + Send + Sync + 'static> _impls_ValueEnum
-        for &&&&&_infer_ValueParser_for<E>
-    {
+    for &&&&&_infer_ValueParser_for<E> {
         type Output = EnumValueParser<E>;
-
         fn value_parser(&self) -> Self::Output {
             EnumValueParser::<E>::new()
         }
     }
-
+    #[cfg_attr(test, rsubstitute::mock(base))]
     #[doc(hidden)]
     #[allow(non_camel_case_types)]
     pub trait _impls_From_OsString: private::_impls_From_OsStringSealed {
@@ -2494,17 +2336,16 @@ pub mod impl_prelude {
     }
     impl<FromOsString> _impls_From_OsString for &&&&_infer_ValueParser_for<FromOsString>
     where
-        FromOsString: From<std::ffi::OsString> + std::any::Any + Clone + Send + Sync + 'static,
+        FromOsString: From<std::ffi::OsString> + std::any::Any + Clone + Send + Sync
+            + 'static,
     {
         fn value_parser(&self) -> _AnonymousValueParser {
             _AnonymousValueParser(
-                OsStringValueParser::new()
-                    .map(|s| FromOsString::from(s))
-                    .into(),
+                OsStringValueParser::new().map(|s| FromOsString::from(s)).into(),
             )
         }
     }
-
+    #[cfg_attr(test, rsubstitute::mock(base))]
     #[doc(hidden)]
     #[allow(non_camel_case_types)]
     pub trait _impls_From_OsStr: private::_impls_From_OsStrSealed {
@@ -2512,18 +2353,16 @@ pub mod impl_prelude {
     }
     impl<FromOsStr> _impls_From_OsStr for &&&_infer_ValueParser_for<FromOsStr>
     where
-        FromOsStr:
-            for<'s> From<&'s std::ffi::OsStr> + std::any::Any + Clone + Send + Sync + 'static,
+        FromOsStr: for<'s> From<&'s std::ffi::OsStr> + std::any::Any + Clone + Send
+            + Sync + 'static,
     {
         fn value_parser(&self) -> _AnonymousValueParser {
             _AnonymousValueParser(
-                OsStringValueParser::new()
-                    .map(|s| FromOsStr::from(&s))
-                    .into(),
+                OsStringValueParser::new().map(|s| FromOsStr::from(&s)).into(),
             )
         }
     }
-
+    #[cfg_attr(test, rsubstitute::mock(base))]
     #[doc(hidden)]
     #[allow(non_camel_case_types)]
     pub trait _impls_From_String: private::_impls_From_StringSealed {
@@ -2534,10 +2373,12 @@ pub mod impl_prelude {
         FromString: From<String> + std::any::Any + Clone + Send + Sync + 'static,
     {
         fn value_parser(&self) -> _AnonymousValueParser {
-            _AnonymousValueParser(StringValueParser::new().map(|s| FromString::from(s)).into())
+            _AnonymousValueParser(
+                StringValueParser::new().map(|s| FromString::from(s)).into(),
+            )
         }
     }
-
+    #[cfg_attr(test, rsubstitute::mock(base))]
     #[doc(hidden)]
     #[allow(non_camel_case_types)]
     pub trait _impls_From_str: private::_impls_From_strSealed {
@@ -2548,10 +2389,12 @@ pub mod impl_prelude {
         FromStr: for<'s> From<&'s str> + std::any::Any + Clone + Send + Sync + 'static,
     {
         fn value_parser(&self) -> _AnonymousValueParser {
-            _AnonymousValueParser(StringValueParser::new().map(|s| FromStr::from(&s)).into())
+            _AnonymousValueParser(
+                StringValueParser::new().map(|s| FromStr::from(&s)).into(),
+            )
         }
     }
-
+    #[cfg_attr(test, rsubstitute::mock(base))]
     #[doc(hidden)]
     #[allow(non_camel_case_types)]
     pub trait _impls_FromStr: private::_impls_FromStrSealed {
@@ -2560,16 +2403,16 @@ pub mod impl_prelude {
     impl<Parse> _impls_FromStr for _infer_ValueParser_for<Parse>
     where
         Parse: std::str::FromStr + std::any::Any + Clone + Send + Sync + 'static,
-        <Parse as std::str::FromStr>::Err: Into<Box<dyn std::error::Error + Send + Sync + 'static>>,
+        <Parse as std::str::FromStr>::Err: Into<
+            Box<dyn std::error::Error + Send + Sync + 'static>,
+        >,
     {
         fn value_parser(&self) -> _AnonymousValueParser {
-            let func: fn(&str) -> Result<Parse, <Parse as std::str::FromStr>::Err> =
-                Parse::from_str;
+            let func: fn(&str) -> Result<Parse, <Parse as std::str::FromStr>::Err> = Parse::from_str;
             _AnonymousValueParser(ValueParser::new(func))
         }
     }
 }
-
 /// Select a [`ValueParser`] implementation from the intended type
 ///
 /// Supported types
@@ -2624,66 +2467,68 @@ pub mod impl_prelude {
 /// ```
 #[macro_export]
 macro_rules! value_parser {
-    ($name:ty) => {{
-        use $crate::builder::impl_prelude::*;
-        let auto = $crate::builder::_infer_ValueParser_for::<$name>::new();
-        (&&&&&&auto).value_parser()
-    }};
+    ($name:ty) => {
+        { use $crate::builder::impl_prelude::*; let auto =
+        $crate::builder::_infer_ValueParser_for::<$name >::new(); (&&&&&& auto)
+        .value_parser() }
+    };
 }
-
 mod private {
     use super::*;
-
+    #[cfg_attr(test, rsubstitute::mock(base))]
     #[allow(non_camel_case_types)]
     pub trait _impls_ValueParserFactorySealed {}
-    impl<P: ValueParserFactory> _impls_ValueParserFactorySealed for &&&&&&_infer_ValueParser_for<P> {}
-
+    impl<P: ValueParserFactory> _impls_ValueParserFactorySealed
+    for &&&&&&_infer_ValueParser_for<P> {}
+    #[cfg_attr(test, rsubstitute::mock(base))]
     #[allow(non_camel_case_types)]
     pub trait _impls_ValueEnumSealed {}
     impl<E: crate::ValueEnum> _impls_ValueEnumSealed for &&&&&_infer_ValueParser_for<E> {}
-
+    #[cfg_attr(test, rsubstitute::mock(base))]
     #[allow(non_camel_case_types)]
     pub trait _impls_From_OsStringSealed {}
-    impl<FromOsString> _impls_From_OsStringSealed for &&&&_infer_ValueParser_for<FromOsString> where
-        FromOsString: From<std::ffi::OsString> + std::any::Any + Send + Sync + 'static
-    {
-    }
-
+    impl<FromOsString> _impls_From_OsStringSealed
+    for &&&&_infer_ValueParser_for<FromOsString>
+    where
+        FromOsString: From<std::ffi::OsString> + std::any::Any + Send + Sync + 'static,
+    {}
+    #[cfg_attr(test, rsubstitute::mock(base))]
     #[allow(non_camel_case_types)]
     pub trait _impls_From_OsStrSealed {}
-    impl<FromOsStr> _impls_From_OsStrSealed for &&&_infer_ValueParser_for<FromOsStr> where
-        FromOsStr: for<'s> From<&'s std::ffi::OsStr> + std::any::Any + Send + Sync + 'static
-    {
-    }
-
+    impl<FromOsStr> _impls_From_OsStrSealed for &&&_infer_ValueParser_for<FromOsStr>
+    where
+        FromOsStr: for<'s> From<&'s std::ffi::OsStr> + std::any::Any + Send + Sync
+            + 'static,
+    {}
+    #[cfg_attr(test, rsubstitute::mock(base))]
     #[allow(non_camel_case_types)]
     pub trait _impls_From_StringSealed {}
-    impl<FromString> _impls_From_StringSealed for &&_infer_ValueParser_for<FromString> where
-        FromString: From<String> + std::any::Any + Send + Sync + 'static
-    {
-    }
-
+    impl<FromString> _impls_From_StringSealed for &&_infer_ValueParser_for<FromString>
+    where
+        FromString: From<String> + std::any::Any + Send + Sync + 'static,
+    {}
+    #[cfg_attr(test, rsubstitute::mock(base))]
     #[allow(non_camel_case_types)]
     pub trait _impls_From_strSealed {}
-    impl<FromStr> _impls_From_strSealed for &_infer_ValueParser_for<FromStr> where
-        FromStr: for<'s> From<&'s str> + std::any::Any + Send + Sync + 'static
-    {
-    }
-
+    impl<FromStr> _impls_From_strSealed for &_infer_ValueParser_for<FromStr>
+    where
+        FromStr: for<'s> From<&'s str> + std::any::Any + Send + Sync + 'static,
+    {}
+    #[cfg_attr(test, rsubstitute::mock(base))]
     #[allow(non_camel_case_types)]
     pub trait _impls_FromStrSealed {}
     impl<Parse> _impls_FromStrSealed for _infer_ValueParser_for<Parse>
     where
         Parse: std::str::FromStr + std::any::Any + Send + Sync + 'static,
-        <Parse as std::str::FromStr>::Err: Into<Box<dyn std::error::Error + Send + Sync + 'static>>,
-    {
-    }
+        <Parse as std::str::FromStr>::Err: Into<
+            Box<dyn std::error::Error + Send + Sync + 'static>,
+        >,
+    {}
 }
-
 #[cfg(test)]
 mod test {
     use super::*;
-
+    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn ensure_typed_applies_to_parse() {
         fn parse(_: &str) -> Result<usize, std::io::Error> {
@@ -2692,8 +2537,8 @@ mod test {
         let cmd = crate::Command::new("cmd");
         let arg = None;
         assert_eq!(
-            TypedValueParser::parse_ref(&parse, &cmd, arg, std::ffi::OsStr::new("foo")).unwrap(),
-            10
+            TypedValueParser::parse_ref(& parse, & cmd, arg, std::ffi::OsStr::new("foo"))
+            .unwrap(), 10
         );
     }
 }

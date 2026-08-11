@@ -2,8 +2,6 @@
 #![cfg_attr(not(feature = "usage"), allow(unused_variables))]
 #![cfg_attr(not(feature = "usage"), allow(clippy::manual_map))]
 #![cfg_attr(not(feature = "usage"), allow(dead_code))]
-
-// Internal
 use crate::builder::ArgAction;
 use crate::builder::StyledStr;
 use crate::builder::Styles;
@@ -12,16 +10,15 @@ use crate::parser::ArgMatcher;
 use crate::util::ChildGraph;
 use crate::util::FlatSet;
 use crate::util::Id;
-
 static DEFAULT_SUB_VALUE_NAME: &str = "COMMAND";
 const USAGE_SEP: &str = "\n       ";
-
+#[cfg_attr(test, rsubstitute::mock)]
 pub(crate) struct Usage<'cmd> {
     cmd: &'cmd Command,
     styles: &'cmd Styles,
     required: Option<&'cmd ChildGraph<Id>>,
 }
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 impl<'cmd> Usage<'cmd> {
     pub(crate) fn new(cmd: &'cmd Command) -> Self {
         Usage {
@@ -30,23 +27,17 @@ impl<'cmd> Usage<'cmd> {
             required: None,
         }
     }
-
     pub(crate) fn required(mut self, required: &'cmd ChildGraph<Id>) -> Self {
         self.required = Some(required);
         self
     }
-
-    // Creates a usage string for display. This happens just after all arguments were parsed, but before
-    // any subcommands have been parsed (so as to give subcommands their own usage recursively)
     pub(crate) fn create_usage_with_title(&self, used: &[Id]) -> Option<StyledStr> {
         debug!("Usage::create_usage_with_title");
         use std::fmt::Write as _;
         let mut styled = StyledStr::new();
         let _ = write!(
-            styled,
-            "{}Usage:{} ",
-            self.styles.get_usage().render(),
-            self.styles.get_usage().render_reset()
+            styled, "{}Usage:{} ", self.styles.get_usage().render(), self.styles
+            .get_usage().render_reset()
         );
         if self.write_usage_no_title(&mut styled, used) {
             styled.trim_end();
@@ -56,11 +47,8 @@ impl<'cmd> Usage<'cmd> {
         debug!("Usage::create_usage_with_title: usage={styled}");
         Some(styled)
     }
-
-    // Creates a usage string (*without title*) if one was not provided by the user manually.
     pub(crate) fn create_usage_no_title(&self, used: &[Id]) -> Option<StyledStr> {
         debug!("Usage::create_usage_no_title");
-
         let mut styled = StyledStr::new();
         if self.write_usage_no_title(&mut styled, used) {
             styled.trim_end();
@@ -70,8 +58,6 @@ impl<'cmd> Usage<'cmd> {
             None
         }
     }
-
-    // Creates a usage string (*without title*) if one was not provided by the user manually.
     fn write_usage_no_title(&self, styled: &mut StyledStr, used: &[Id]) -> bool {
         debug!("Usage::create_usage_no_title");
         if let Some(u) = self.cmd.get_overridden_usage() {
@@ -87,22 +73,16 @@ impl<'cmd> Usage<'cmd> {
                 }
                 true
             }
-
-            #[cfg(not(feature = "usage"))]
-            {
-                false
-            }
+            #[cfg(not(feature = "usage"))] { false }
         }
     }
 }
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 #[cfg(feature = "usage")]
 impl Usage<'_> {
-    // Creates a usage string for display in help messages (i.e. not for errors)
     fn write_help_usage(&self, styled: &mut StyledStr) {
         debug!("Usage::write_help_usage");
         use std::fmt::Write;
-
         if self.cmd.has_visible_subcommands() && self.cmd.is_flatten_help_set() {
             if !self.cmd.is_subcommand_required_set()
                 || self.cmd.is_args_conflicts_with_subcommands_set()
@@ -129,16 +109,11 @@ impl Usage<'_> {
             self.write_subcommand_usage(styled);
         }
     }
-
-    // Creates a context aware usage string, or "smart usage" from currently used
-    // args, and requirements
     fn write_smart_usage(&self, styled: &mut StyledStr, used: &[Id]) {
         debug!("Usage::create_smart_usage");
         use std::fmt::Write;
         let placeholder = &self.styles.get_placeholder();
-
         self.write_arg_usage(styled, used, true);
-
         if self.cmd.is_subcommand_required_set() {
             let value_name = self
                 .cmd
@@ -147,32 +122,26 @@ impl Usage<'_> {
             let _ = write!(styled, "{placeholder}<{value_name}>{placeholder:#}",);
         }
     }
-
     fn write_arg_usage(&self, styled: &mut StyledStr, used: &[Id], incl_reqs: bool) {
         debug!("Usage::write_arg_usage; incl_reqs={incl_reqs:?}");
         use std::fmt::Write as _;
         let literal = &self.styles.get_literal();
         let placeholder = &self.styles.get_placeholder();
-
         let bin_name = self.cmd.get_usage_name_fallback();
         if !bin_name.is_empty() {
-            // the trim won't properly remove a leading space due to the formatting
             let _ = write!(styled, "{literal}{bin_name}{literal:#} ",);
         }
-
         if used.is_empty() && self.needs_options_tag() {
             let _ = write!(styled, "{placeholder}[OPTIONS]{placeholder:#} ",);
         }
-
         self.write_args(styled, used, !incl_reqs);
     }
-
     fn write_subcommand_usage(&self, styled: &mut StyledStr) {
         debug!("Usage::write_subcommand_usage");
         use std::fmt::Write as _;
-
-        // incl_reqs is only false when this function is called recursively
-        if self.cmd.has_visible_subcommands() || self.cmd.is_allow_external_subcommands_set() {
+        if self.cmd.has_visible_subcommands()
+            || self.cmd.is_allow_external_subcommands_set()
+        {
             let literal = &self.styles.get_literal();
             let placeholder = &self.styles.get_placeholder();
             let value_name = self
@@ -186,7 +155,6 @@ impl Usage<'_> {
                 let _ = write!(styled, "{USAGE_SEP}");
                 if self.cmd.is_args_conflicts_with_subcommands_set() {
                     let bin_name = self.cmd.get_usage_name_fallback();
-                    // Short-circuit full usage creation since no args will be relevant
                     let _ = write!(styled, "{literal}{bin_name}{literal:#} ",);
                 } else {
                     self.write_arg_usage(styled, &[], false);
@@ -199,14 +167,10 @@ impl Usage<'_> {
             }
         }
     }
-
-    // Determines if we need the `[OPTIONS]` tag in the usage string
     fn needs_options_tag(&self) -> bool {
         debug!("Usage::needs_options_tag");
         'outer: for f in self.cmd.get_non_positionals() {
             debug!("Usage::needs_options_tag:iter: f={}", f.get_id());
-
-            // Don't print `[OPTIONS]` just for help or version
             if f.get_long() == Some("help") || f.get_long() == Some("version") {
                 debug!("Usage::needs_options_tag:iter Option is built-in");
                 continue;
@@ -225,7 +189,6 @@ impl Usage<'_> {
                     continue;
                 }
             }
-
             if f.is_hide_set() {
                 debug!("Usage::needs_options_tag:iter Option is hidden");
                 continue;
@@ -241,21 +204,21 @@ impl Usage<'_> {
                     continue 'outer;
                 }
             }
-
             debug!("Usage::needs_options_tag:iter: [OPTIONS] required");
             return true;
         }
-
         debug!("Usage::needs_options_tag: [OPTIONS] not required");
         false
     }
-
-    // Returns the required args in usage string form by fully unrolling all groups
-    pub(crate) fn write_args(&self, styled: &mut StyledStr, incls: &[Id], force_optional: bool) {
+    pub(crate) fn write_args(
+        &self,
+        styled: &mut StyledStr,
+        incls: &[Id],
+        force_optional: bool,
+    ) {
         debug!("Usage::write_args: incls={incls:?}",);
         use std::fmt::Write as _;
         let literal = &self.styles.get_literal();
-
         let required_owned;
         let required = if let Some(required) = self.required {
             required
@@ -263,7 +226,6 @@ impl Usage<'_> {
             required_owned = self.cmd.required_graph();
             &required_owned
         };
-
         let mut unrolled_reqs = Vec::new();
         for a in required.iter() {
             let is_relevant = |(val, req_arg): &(ArgPredicate, Id)| -> Option<Id> {
@@ -273,18 +235,12 @@ impl Usage<'_> {
                 };
                 required.then(|| req_arg.clone())
             };
-
             for aa in self.cmd.unroll_arg_requires(is_relevant, a) {
-                // if we don't check for duplicates here this causes duplicate error messages
-                // see https://github.com/clap-rs/clap/issues/2770
                 unrolled_reqs.push(aa);
             }
-            // always include the required arg itself. it will not be enumerated
-            // by unroll_requirements_for_arg.
             unrolled_reqs.push(a.clone());
         }
         debug!("Usage::get_args: unrolled_reqs={unrolled_reqs:?}");
-
         let mut required_groups_members = FlatSet::new();
         let mut required_groups = FlatSet::new();
         for req in unrolled_reqs.iter().chain(incls.iter()) {
@@ -297,7 +253,6 @@ impl Usage<'_> {
                 debug_assert!(self.cmd.find(req).is_some());
             }
         }
-
         let mut required_opts = FlatSet::new();
         let mut required_positionals = Vec::new();
         for req in unrolled_reqs.iter().chain(incls.iter()) {
@@ -305,7 +260,6 @@ impl Usage<'_> {
                 if required_groups_members.contains(arg.get_id()) {
                     continue;
                 }
-
                 let stylized = arg.stylized(self.styles, Some(!force_optional));
                 if let Some(index) = arg.get_index() {
                     let new_len = index + 1;
@@ -320,7 +274,6 @@ impl Usage<'_> {
                 debug_assert!(self.cmd.find_group(req).is_some());
             }
         }
-
         for pos in self.cmd.get_positionals() {
             if pos.is_hide_set() {
                 continue;
@@ -328,7 +281,6 @@ impl Usage<'_> {
             if required_groups_members.contains(pos.get_id()) {
                 continue;
             }
-
             let index = pos.get_index().unwrap();
             let new_len = index + 1;
             if required_positionals.len() < new_len {
@@ -358,7 +310,6 @@ impl Usage<'_> {
                 required_positionals[index] = None;
             }
         }
-
         if !force_optional {
             for arg in required_opts {
                 styled.push_styled(&arg);
@@ -374,7 +325,6 @@ impl Usage<'_> {
             styled.push_str(" ");
         }
     }
-
     pub(crate) fn get_required_usage_from(
         &self,
         incls: &[Id],
@@ -383,11 +333,8 @@ impl Usage<'_> {
     ) -> Vec<StyledStr> {
         debug!(
             "Usage::get_required_usage_from: incls={:?}, matcher={:?}, incl_last={:?}",
-            incls,
-            matcher.is_some(),
-            incl_last
+            incls, matcher.is_some(), incl_last
         );
-
         let required_owned;
         let required = if let Some(required) = self.required {
             required
@@ -395,7 +342,6 @@ impl Usage<'_> {
             required_owned = self.cmd.required_graph();
             &required_owned
         };
-
         let mut unrolled_reqs = Vec::new();
         for a in required.iter() {
             let is_relevant = |(val, req_arg): &(ArgPredicate, Id)| -> Option<Id> {
@@ -411,18 +357,12 @@ impl Usage<'_> {
                 };
                 required.then(|| req_arg.clone())
             };
-
             for aa in self.cmd.unroll_arg_requires(is_relevant, a) {
-                // if we don't check for duplicates here this causes duplicate error messages
-                // see https://github.com/clap-rs/clap/issues/2770
                 unrolled_reqs.push(aa);
             }
-            // always include the required arg itself. it will not be enumerated
-            // by unroll_requirements_for_arg.
             unrolled_reqs.push(a.clone());
         }
         debug!("Usage::get_required_usage_from: unrolled_reqs={unrolled_reqs:?}");
-
         let mut required_groups_members = FlatSet::new();
         let mut required_groups = FlatSet::new();
         for req in unrolled_reqs.iter().chain(incls.iter()) {
@@ -435,11 +375,12 @@ impl Usage<'_> {
                             .any(|arg| m.check_explicit(arg, &ArgPredicate::IsPresent))
                     })
                     .unwrap_or(false);
-                debug!("Usage::get_required_usage_from:iter:{req:?} group is_present={is_present}");
+                debug!(
+                    "Usage::get_required_usage_from:iter:{req:?} group is_present={is_present}"
+                );
                 if is_present {
                     continue;
                 }
-
                 let elem = self.cmd.format_group(req);
                 required_groups.insert(elem);
                 required_groups_members.extend(group_members);
@@ -447,7 +388,6 @@ impl Usage<'_> {
                 debug_assert!(self.cmd.find(req).is_some(), "`{req}` must exist");
             }
         }
-
         let mut required_opts = FlatSet::new();
         let mut required_positionals = Vec::new();
         for req in unrolled_reqs.iter().chain(incls.iter()) {
@@ -455,15 +395,15 @@ impl Usage<'_> {
                 if required_groups_members.contains(arg.get_id()) {
                     continue;
                 }
-
                 let is_present = matcher
                     .map(|m| m.check_explicit(req, &ArgPredicate::IsPresent))
                     .unwrap_or(false);
-                debug!("Usage::get_required_usage_from:iter:{req:?} arg is_present={is_present}");
+                debug!(
+                    "Usage::get_required_usage_from:iter:{req:?} arg is_present={is_present}"
+                );
                 if is_present {
                     continue;
                 }
-
                 let stylized = arg.stylized(self.styles, Some(true));
                 if let Some(index) = arg.get_index() {
                     if !arg.is_last_set() || incl_last {
@@ -480,14 +420,12 @@ impl Usage<'_> {
                 debug_assert!(self.cmd.find_group(req).is_some());
             }
         }
-
         let mut ret_val = Vec::new();
         ret_val.extend(required_opts);
         ret_val.extend(required_groups);
         for pos in required_positionals.into_iter().flatten() {
             ret_val.push(pos);
         }
-
         debug!("Usage::get_required_usage_from: ret_val={ret_val:?}");
         ret_val
     }

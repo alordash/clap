@@ -38,7 +38,6 @@ pub enum ContextKind {
     /// An opaque message to the user
     Custom,
 }
-
 impl ContextKind {
     /// End-user description of the error case, where relevant
     pub fn as_str(self) -> Option<&'static str> {
@@ -63,13 +62,11 @@ impl ContextKind {
         }
     }
 }
-
 impl std::fmt::Display for ContextKind {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         self.as_str().unwrap_or_default().fmt(f)
     }
 }
-
 /// A piece of error information
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[non_exhaustive]
@@ -90,7 +87,6 @@ pub enum ContextValue {
     /// A single value
     Number(isize),
 }
-
 impl std::fmt::Display for ContextValue {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {

@@ -2,9 +2,7 @@
 #![allow(missing_debug_implementations)]
 #![cfg_attr(not(feature = "error-context"), allow(dead_code))]
 #![cfg_attr(not(feature = "error-context"), allow(unused_imports))]
-
 use std::borrow::Cow;
-
 use crate::ArgAction;
 use crate::builder::Command;
 use crate::builder::StyledStr;
@@ -16,13 +14,13 @@ use crate::error::ContextValue;
 use crate::error::ErrorKind;
 use crate::output::TAB;
 use crate::util::Escape;
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 /// Defines how to format an error for displaying to the user
 pub trait ErrorFormatter: Sized {
     /// Stylize the error for the terminal
     fn format_error(error: &crate::error::Error<Self>) -> StyledStr;
 }
-
+#[cfg_attr(test, rsubstitute::mock)]
 /// Report [`ErrorKind`]
 ///
 /// No context is included.
@@ -35,12 +33,11 @@ pub trait ErrorFormatter: Sized {
 /// </div>
 #[non_exhaustive]
 pub struct KindFormatter;
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 impl ErrorFormatter for KindFormatter {
     fn format_error(error: &crate::error::Error<Self>) -> StyledStr {
         use std::fmt::Write as _;
         let styles = &error.inner.styles;
-
         let mut styled = StyledStr::new();
         start_error(&mut styled, styles);
         if let Some(msg) = error.kind().as_str() {
@@ -54,24 +51,22 @@ impl ErrorFormatter for KindFormatter {
         styled
     }
 }
-
+#[cfg_attr(test, rsubstitute::mock)]
 /// Richly formatted error context
 ///
 /// This follows the [rustc diagnostic style guide](https://rustc-dev-guide.rust-lang.org/diagnostics.html#suggestion-style-guide).
 #[non_exhaustive]
 #[cfg(feature = "error-context")]
 pub struct RichFormatter;
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 #[cfg(feature = "error-context")]
 impl ErrorFormatter for RichFormatter {
     fn format_error(error: &crate::error::Error<Self>) -> StyledStr {
         use std::fmt::Write as _;
         let styles = &error.inner.styles;
         let valid = &styles.get_valid();
-
         let mut styled = StyledStr::new();
         start_error(&mut styled, styles);
-
         if !write_dynamic_context(error, &mut styled, styles) {
             if let Some(msg) = error.kind().as_str() {
                 styled.push_str(msg);
@@ -81,7 +76,6 @@ impl ErrorFormatter for RichFormatter {
                 styled.push_str("unknown cause");
             }
         }
-
         let mut suggested = false;
         if let Some(valid) = error.get(ContextKind::SuggestedSubcommand) {
             styled.push_str("\n");
@@ -117,24 +111,21 @@ impl ErrorFormatter for RichFormatter {
                 styled.push_styled(suggestion);
             }
         }
-
         let usage = error.get(ContextKind::Usage);
         if let Some(ContextValue::StyledStr(usage)) = usage {
             put_usage(&mut styled, usage);
         }
-
         try_help(&mut styled, styles, error.inner.help_flag.as_deref());
-
         styled
     }
 }
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 fn start_error(styled: &mut StyledStr, styles: &Styles) {
     use std::fmt::Write as _;
     let error = &styles.get_error();
     let _ = write!(styled, "{error}error:{error:#} ");
 }
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 #[must_use]
 #[cfg(feature = "error-context")]
 fn write_dynamic_context(
@@ -146,11 +137,12 @@ fn write_dynamic_context(
     let valid = styles.get_valid();
     let invalid = styles.get_invalid();
     let literal = styles.get_literal();
-
     match error.kind() {
         ErrorKind::ArgumentConflict => {
             let mut prior_arg = error.get(ContextKind::PriorArg);
-            if let Some(ContextValue::String(invalid_arg)) = error.get(ContextKind::InvalidArg) {
+            if let Some(ContextValue::String(invalid_arg)) = error
+                .get(ContextKind::InvalidArg)
+            {
                 if Some(&ContextValue::String(invalid_arg.clone())) == prior_arg {
                     prior_arg = None;
                     let _ = write!(
@@ -163,8 +155,8 @@ fn write_dynamic_context(
                         "the argument '{invalid}{invalid_arg}{invalid:#}' cannot be used with",
                     );
                 }
-            } else if let Some(ContextValue::String(invalid_arg)) =
-                error.get(ContextKind::InvalidSubcommand)
+            } else if let Some(ContextValue::String(invalid_arg)) = error
+                .get(ContextKind::InvalidSubcommand)
             {
                 let _ = write!(
                     styled,
@@ -173,7 +165,6 @@ fn write_dynamic_context(
             } else {
                 styled.push_str(error.kind().as_str().unwrap());
             }
-
             if let Some(prior_arg) = prior_arg {
                 match prior_arg {
                     ContextValue::Strings(values) => {
@@ -190,7 +181,6 @@ fn write_dynamic_context(
                     }
                 }
             }
-
             true
         }
         ErrorKind::NoEquals => {
@@ -211,8 +201,7 @@ fn write_dynamic_context(
             if let (
                 Some(ContextValue::String(invalid_arg)),
                 Some(ContextValue::String(invalid_value)),
-            ) = (invalid_arg, invalid_value)
-            {
+            ) = (invalid_arg, invalid_value) {
                 if invalid_value.is_empty() {
                     let _ = write!(
                         styled,
@@ -224,10 +213,8 @@ fn write_dynamic_context(
                         "invalid value '{invalid}{invalid_value}{invalid:#}' for '{literal}{invalid_arg}{literal:#}'",
                     );
                 }
-
                 let values = error.get(ContextKind::ValidValue);
                 write_values_list("possible values", styled, valid, values);
-
                 true
             } else {
                 false
@@ -266,7 +253,6 @@ fn write_dynamic_context(
                 );
                 let values = error.get(ContextKind::ValidSubcommand);
                 write_values_list("subcommands", styled, valid, values);
-
                 true
             } else {
                 false
@@ -279,8 +265,7 @@ fn write_dynamic_context(
             if let (
                 Some(ContextValue::String(invalid_arg)),
                 Some(ContextValue::String(invalid_value)),
-            ) = (invalid_arg, invalid_value)
-            {
+            ) = (invalid_arg, invalid_value) {
                 let _ = write!(
                     styled,
                     "unexpected value '{invalid}{invalid_value}{invalid:#}' for '{literal}{invalid_arg}{literal:#}' found; no more were expected",
@@ -298,8 +283,7 @@ fn write_dynamic_context(
                 Some(ContextValue::String(invalid_arg)),
                 Some(ContextValue::Number(actual_num_values)),
                 Some(ContextValue::Number(min_values)),
-            ) = (invalid_arg, actual_num_values, min_values)
-            {
+            ) = (invalid_arg, actual_num_values, min_values) {
                 let were_provided = singular_or_plural(*actual_num_values as usize);
                 let _ = write!(
                     styled,
@@ -316,8 +300,7 @@ fn write_dynamic_context(
             if let (
                 Some(ContextValue::String(invalid_arg)),
                 Some(ContextValue::String(invalid_value)),
-            ) = (invalid_arg, invalid_value)
-            {
+            ) = (invalid_arg, invalid_value) {
                 let _ = write!(
                     styled,
                     "invalid value '{invalid}{invalid_value}{invalid:#}' for '{literal}{invalid_arg}{literal:#}'",
@@ -338,8 +321,7 @@ fn write_dynamic_context(
                 Some(ContextValue::String(invalid_arg)),
                 Some(ContextValue::Number(actual_num_values)),
                 Some(ContextValue::Number(num_values)),
-            ) = (invalid_arg, actual_num_values, num_values)
-            {
+            ) = (invalid_arg, actual_num_values, num_values) {
                 let were_provided = singular_or_plural(*actual_num_values as usize);
                 let _ = write!(
                     styled,
@@ -369,7 +351,7 @@ fn write_dynamic_context(
         | ErrorKind::Format => false,
     }
 }
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 #[cfg(feature = "error-context")]
 fn write_values_list(
     list_name: &'static str,
@@ -381,19 +363,17 @@ fn write_values_list(
     if let Some(ContextValue::Strings(possible_values)) = possible_values {
         if !possible_values.is_empty() {
             let _ = write!(styled, "\n{TAB}[{list_name}: ");
-
             for (idx, val) in possible_values.iter().enumerate() {
                 if idx > 0 {
                     styled.push_str(", ");
                 }
                 let _ = write!(styled, "{valid}{}{valid:#}", Escape(val));
             }
-
             styled.push_str("]");
         }
     }
 }
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 pub(crate) fn format_error_message(
     message: &str,
     styles: &Styles,
@@ -411,21 +391,17 @@ pub(crate) fn format_error_message(
     }
     styled
 }
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 /// Returns the singular or plural form on the verb to be based on the argument's value.
 fn singular_or_plural(n: usize) -> &'static str {
-    if n > 1 {
-        " were provided"
-    } else {
-        " was provided"
-    }
+    if n > 1 { " were provided" } else { " was provided" }
 }
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 fn put_usage(styled: &mut StyledStr, usage: &StyledStr) {
     styled.push_str("\n\n");
     styled.push_styled(usage);
 }
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 pub(crate) fn get_help_flag(cmd: &Command) -> Option<Cow<'static, str>> {
     if !cmd.is_disable_help_flag_set() {
         Some(Cow::Borrowed("--help"))
@@ -437,46 +413,49 @@ pub(crate) fn get_help_flag(cmd: &Command) -> Option<Cow<'static, str>> {
         None
     }
 }
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 fn get_user_help_flag(cmd: &Command) -> Option<String> {
-    let arg = cmd.get_arguments().find(|arg| match arg.get_action() {
-        ArgAction::Help | ArgAction::HelpShort | ArgAction::HelpLong => true,
-        ArgAction::Append
-        | ArgAction::Count
-        | ArgAction::SetTrue
-        | ArgAction::SetFalse
-        | ArgAction::Set
-        | ArgAction::Version => false,
-    })?;
-
+    let arg = cmd
+        .get_arguments()
+        .find(|arg| match arg.get_action() {
+            ArgAction::Help | ArgAction::HelpShort | ArgAction::HelpLong => true,
+            ArgAction::Append
+            | ArgAction::Count
+            | ArgAction::SetTrue
+            | ArgAction::SetFalse
+            | ArgAction::Set
+            | ArgAction::Version => false,
+        })?;
     arg.get_long()
         .map(|long| format!("--{long}"))
         .or_else(|| arg.get_short().map(|short| format!("-{short}")))
 }
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 fn try_help(styled: &mut StyledStr, styles: &Styles, help: Option<&str>) {
     if let Some(help) = help {
         use std::fmt::Write as _;
         let literal = &styles.get_literal();
         let _ = write!(
-            styled,
-            "\n\nFor more information, try '{literal}{help}{literal:#}'.\n",
+            styled, "\n\nFor more information, try '{literal}{help}{literal:#}'.\n",
         );
     } else {
         styled.push_str("\n");
     }
 }
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 #[cfg(feature = "error-context")]
-fn did_you_mean(styled: &mut StyledStr, styles: &Styles, context: &str, possibles: &ContextValue) {
+fn did_you_mean(
+    styled: &mut StyledStr,
+    styles: &Styles,
+    context: &str,
+    possibles: &ContextValue,
+) {
     use std::fmt::Write as _;
-
     let valid = &styles.get_valid();
     let _ = write!(styled, "{TAB}{valid}tip:{valid:#}",);
     if let ContextValue::String(possible) = possibles {
         let _ = write!(
-            styled,
-            " a similar {context} exists: '{valid}{possible}{valid:#}'",
+            styled, " a similar {context} exists: '{valid}{possible}{valid:#}'",
         );
     } else if let ContextValue::Strings(possibles) = possibles {
         if possibles.len() == 1 {

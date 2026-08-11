@@ -1,7 +1,6 @@
-// Internal
 use crate::builder::IntoResettable;
 use crate::util::Id;
-
+#[cfg_attr(test, rsubstitute::mock)]
 /// Specifies a logical group of [arguments]
 ///
 /// You can use this for
@@ -73,7 +72,7 @@ pub struct ArgGroup {
     pub(crate) conflicts: Vec<Id>,
     pub(crate) multiple: bool,
 }
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 /// # Builder
 impl ArgGroup {
     /// Create a `ArgGroup` using a unique name.
@@ -92,7 +91,6 @@ impl ArgGroup {
     pub fn new(id: impl Into<Id>) -> Self {
         ArgGroup::default().id(id)
     }
-
     /// Sets the group name.
     ///
     /// # Examples
@@ -108,7 +106,6 @@ impl ArgGroup {
         self.id = id.into();
         self
     }
-
     /// Adds an [argument] to this group by name
     ///
     /// # Examples
@@ -142,7 +139,6 @@ impl ArgGroup {
         }
         self
     }
-
     /// Adds multiple [arguments] to this group by name
     ///
     /// # Examples
@@ -173,7 +169,6 @@ impl ArgGroup {
         }
         self
     }
-
     /// Getters for all args. It will return a vector of `Id`
     ///
     /// # Example
@@ -191,7 +186,6 @@ impl ArgGroup {
     pub fn get_args(&self) -> impl Iterator<Item = &Id> {
         self.args.iter()
     }
-
     /// Allows more than one of the [`Arg`]s in this group to be used. (Default: `false`)
     ///
     /// # Examples
@@ -245,7 +239,6 @@ impl ArgGroup {
         self.multiple = yes;
         self
     }
-
     /// Return true if the group allows more than one of the arguments
     /// in this group to be used. (Default: `false`)
     ///
@@ -263,7 +256,6 @@ impl ArgGroup {
     pub fn is_multiple(&mut self) -> bool {
         self.multiple
     }
-
     /// Require an argument from the group to be present when parsing.
     ///
     /// This is unless conflicting with another argument.  A required group will be displayed in
@@ -316,7 +308,6 @@ impl ArgGroup {
         self.required = yes;
         self
     }
-
     /// Specify an argument or group that must be present when this group is.
     ///
     /// This is not to be confused with a [required group]. Requirement rules function just like
@@ -365,7 +356,6 @@ impl ArgGroup {
         }
         self
     }
-
     /// Specify arguments or groups that must be present when this group is.
     ///
     /// This is not to be confused with a [required group]. Requirement rules function just like
@@ -415,7 +405,6 @@ impl ArgGroup {
         }
         self
     }
-
     /// Specify an argument or group that must **not** be present when this group is.
     ///
     /// Exclusion (aka conflict) rules function just like [argument exclusion rules], you can name
@@ -462,7 +451,6 @@ impl ArgGroup {
         }
         self
     }
-
     /// Specify arguments or groups that must **not** be present when this group is.
     ///
     /// Exclusion rules function just like [argument exclusion rules], you can name other arguments
@@ -505,14 +493,17 @@ impl ArgGroup {
     ///
     /// [argument exclusion rules]: crate::Arg::conflicts_with_all()
     #[must_use]
-    pub fn conflicts_with_all(mut self, ns: impl IntoIterator<Item = impl Into<Id>>) -> Self {
+    pub fn conflicts_with_all(
+        mut self,
+        ns: impl IntoIterator<Item = impl Into<Id>>,
+    ) -> Self {
         for n in ns {
             self = self.conflicts_with(n);
         }
         self
     }
 }
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 /// # Reflection
 impl ArgGroup {
     /// Get the name of the group
@@ -520,24 +511,22 @@ impl ArgGroup {
     pub fn get_id(&self) -> &Id {
         &self.id
     }
-
     /// Reports whether [`ArgGroup::required`] is set
     #[inline]
     pub fn is_required_set(&self) -> bool {
         self.required
     }
 }
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 impl From<&'_ ArgGroup> for ArgGroup {
     fn from(g: &ArgGroup) -> Self {
         g.clone()
     }
 }
-
 #[cfg(test)]
 mod test {
     use super::*;
-
+    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn groups() {
         let g = ArgGroup::new("test")
@@ -551,16 +540,14 @@ mod test {
             .requires("r1")
             .requires_all(["r2", "r3"])
             .requires("r4");
-
         let args: Vec<Id> = vec!["a1".into(), "a4".into(), "a2".into(), "a3".into()];
         let reqs: Vec<Id> = vec!["r1".into(), "r2".into(), "r3".into(), "r4".into()];
         let confs: Vec<Id> = vec!["c1".into(), "c2".into(), "c3".into(), "c4".into()];
-
         assert_eq!(g.args, args);
         assert_eq!(g.requires, reqs);
         assert_eq!(g.conflicts, confs);
     }
-
+    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn test_from() {
         let g = ArgGroup::new("test")
@@ -574,42 +561,38 @@ mod test {
             .requires("r1")
             .requires_all(["r2", "r3"])
             .requires("r4");
-
         let args: Vec<Id> = vec!["a1".into(), "a4".into(), "a2".into(), "a3".into()];
         let reqs: Vec<Id> = vec!["r1".into(), "r2".into(), "r3".into(), "r4".into()];
         let confs: Vec<Id> = vec!["c1".into(), "c2".into(), "c3".into(), "c4".into()];
-
         let g2 = ArgGroup::from(&g);
         assert_eq!(g2.args, args);
         assert_eq!(g2.requires, reqs);
         assert_eq!(g2.conflicts, confs);
     }
-
-    // This test will *fail to compile* if ArgGroup is not Send + Sync
+    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn arg_group_send_sync() {
         fn foo<T: Send + Sync>(_: T) {}
         foo(ArgGroup::new("test"));
     }
-
+    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn arg_group_expose_is_multiple_helper() {
         let args: Vec<Id> = vec!["a1".into(), "a4".into()];
-
         let mut grp_multiple = ArgGroup::new("test_multiple").args(&args).multiple(true);
         assert!(grp_multiple.is_multiple());
-
-        let mut grp_not_multiple = ArgGroup::new("test_multiple").args(&args).multiple(false);
-        assert!(!grp_not_multiple.is_multiple());
+        let mut grp_not_multiple = ArgGroup::new("test_multiple")
+            .args(&args)
+            .multiple(false);
+        assert!(! grp_not_multiple.is_multiple());
     }
-
+    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn arg_group_expose_get_args_helper() {
         let args: Vec<Id> = vec!["a1".into(), "a4".into()];
         let grp = ArgGroup::new("program").args(&args);
-
         for (pos, arg) in grp.get_args().enumerate() {
-            assert_eq!(*arg, args[pos]);
+            assert_eq!(* arg, args[pos]);
         }
     }
 }

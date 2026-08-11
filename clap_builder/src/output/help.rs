@@ -1,14 +1,16 @@
 #![cfg_attr(not(feature = "help"), allow(unused_variables))]
-
-// Internal
 use crate::builder::Command;
 use crate::builder::StyledStr;
 use crate::output::Usage;
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 /// Writes the parser help to the wrapped stream.
-pub(crate) fn write_help(writer: &mut StyledStr, cmd: &Command, usage: &Usage<'_>, use_long: bool) {
+pub(crate) fn write_help(
+    writer: &mut StyledStr,
+    cmd: &Command,
+    usage: &Usage<'_>,
+    use_long: bool,
+) {
     debug!("write_help");
-
     if let Some(h) = cmd.get_override_help() {
         writer.push_styled(h);
     } else {
@@ -23,17 +25,14 @@ pub(crate) fn write_help(writer: &mut StyledStr, cmd: &Command, usage: &Usage<'_
                 AutoHelp::new(writer, cmd, usage, use_long).write_help();
             }
         }
-
         #[cfg(not(feature = "help"))]
         {
-            debug!("write_help: no help, `Command::override_help` and `help` is missing");
+            debug!(
+                "write_help: no help, `Command::override_help` and `help` is missing"
+            );
         }
     }
-
-    // Remove any lines from unused sections
     writer.trim_start_lines();
-    // Remove any whitespace caused by book keeping
     writer.trim_end();
-    // Ensure there is still a trailing newline
     writer.push_str("\n");
 }

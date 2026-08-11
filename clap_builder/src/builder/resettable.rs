@@ -1,6 +1,3 @@
-// Unlike `impl Into<Option<T>>` or `Option<impl Into<T>>`, this isn't ambiguous for the `None`
-// case.
-
 use crate::builder::ArgAction;
 use crate::builder::OsStr;
 use crate::builder::Str;
@@ -8,7 +5,6 @@ use crate::builder::StyledStr;
 use crate::builder::ValueHint;
 use crate::builder::ValueParser;
 use crate::builder::ValueRange;
-
 /// Clearable builder value
 ///
 /// This allows a builder function to both accept any value that can [`Into::into`] `T` (like
@@ -36,7 +32,6 @@ pub enum Resettable<T> {
     /// Reset builder value
     Reset,
 }
-
 impl<T> Resettable<T> {
     pub(crate) fn into_option(self) -> Option<T> {
         match self {
@@ -45,13 +40,11 @@ impl<T> Resettable<T> {
         }
     }
 }
-
 impl<T> From<T> for Resettable<T> {
     fn from(other: T) -> Self {
         Self::Value(other)
     }
 }
-
 impl<T> From<Option<T>> for Resettable<T> {
     fn from(other: Option<T>) -> Self {
         match other {
@@ -60,13 +53,12 @@ impl<T> From<Option<T>> for Resettable<T> {
         }
     }
 }
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 /// Convert to the intended resettable type
 pub trait IntoResettable<T> {
     /// Convert to the intended resettable type
     fn into_resettable(self) -> Resettable<T>;
 }
-
 impl IntoResettable<char> for Option<char> {
     fn into_resettable(self) -> Resettable<char> {
         match self {
@@ -75,7 +67,6 @@ impl IntoResettable<char> for Option<char> {
         }
     }
 }
-
 impl IntoResettable<usize> for Option<usize> {
     fn into_resettable(self) -> Resettable<usize> {
         match self {
@@ -84,7 +75,6 @@ impl IntoResettable<usize> for Option<usize> {
         }
     }
 }
-
 impl IntoResettable<ArgAction> for Option<ArgAction> {
     fn into_resettable(self) -> Resettable<ArgAction> {
         match self {
@@ -93,7 +83,6 @@ impl IntoResettable<ArgAction> for Option<ArgAction> {
         }
     }
 }
-
 impl IntoResettable<ValueHint> for Option<ValueHint> {
     fn into_resettable(self) -> Resettable<ValueHint> {
         match self {
@@ -102,7 +91,6 @@ impl IntoResettable<ValueHint> for Option<ValueHint> {
         }
     }
 }
-
 impl IntoResettable<ValueParser> for Option<ValueParser> {
     fn into_resettable(self) -> Resettable<ValueParser> {
         match self {
@@ -111,7 +99,6 @@ impl IntoResettable<ValueParser> for Option<ValueParser> {
         }
     }
 }
-
 impl IntoResettable<StyledStr> for Option<&'static str> {
     fn into_resettable(self) -> Resettable<StyledStr> {
         match self {
@@ -120,7 +107,6 @@ impl IntoResettable<StyledStr> for Option<&'static str> {
         }
     }
 }
-
 impl IntoResettable<OsStr> for Option<&'static str> {
     fn into_resettable(self) -> Resettable<OsStr> {
         match self {
@@ -129,7 +115,6 @@ impl IntoResettable<OsStr> for Option<&'static str> {
         }
     }
 }
-
 impl IntoResettable<Str> for Option<&'static str> {
     fn into_resettable(self) -> Resettable<Str> {
         match self {
@@ -138,73 +123,61 @@ impl IntoResettable<Str> for Option<&'static str> {
         }
     }
 }
-
 impl<T> IntoResettable<T> for Resettable<T> {
     fn into_resettable(self) -> Resettable<T> {
         self
     }
 }
-
 impl IntoResettable<char> for char {
     fn into_resettable(self) -> Resettable<char> {
         Resettable::Value(self)
     }
 }
-
 impl IntoResettable<usize> for usize {
     fn into_resettable(self) -> Resettable<usize> {
         Resettable::Value(self)
     }
 }
-
 impl IntoResettable<ArgAction> for ArgAction {
     fn into_resettable(self) -> Resettable<ArgAction> {
         Resettable::Value(self)
     }
 }
-
 impl IntoResettable<ValueHint> for ValueHint {
     fn into_resettable(self) -> Resettable<ValueHint> {
         Resettable::Value(self)
     }
 }
-
 impl<I: Into<ValueRange>> IntoResettable<ValueRange> for I {
     fn into_resettable(self) -> Resettable<ValueRange> {
         Resettable::Value(self.into())
     }
 }
-
 impl<I: Into<ValueParser>> IntoResettable<ValueParser> for I {
     fn into_resettable(self) -> Resettable<ValueParser> {
         Resettable::Value(self.into())
     }
 }
-
 impl<I: Into<String>> IntoResettable<String> for I {
     fn into_resettable(self) -> Resettable<String> {
         Resettable::Value(self.into())
     }
 }
-
 impl<I: Into<StyledStr>> IntoResettable<StyledStr> for I {
     fn into_resettable(self) -> Resettable<StyledStr> {
         Resettable::Value(self.into())
     }
 }
-
 impl<I: Into<OsStr>> IntoResettable<OsStr> for I {
     fn into_resettable(self) -> Resettable<OsStr> {
         Resettable::Value(self.into())
     }
 }
-
 impl<I: Into<Str>> IntoResettable<Str> for I {
     fn into_resettable(self) -> Resettable<Str> {
         Resettable::Value(self.into())
     }
 }
-
 impl<I: Into<crate::Id>> IntoResettable<crate::Id> for I {
     fn into_resettable(self) -> Resettable<crate::Id> {
         Resettable::Value(self.into())

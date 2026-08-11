@@ -1,5 +1,4 @@
 use crate::builder::OsStr;
-
 /// Operations to perform on argument values
 ///
 /// These do not apply to [`ValueSource::DefaultValue`][crate::parser::ValueSource::DefaultValue]
@@ -11,7 +10,6 @@ pub enum ArgPredicate {
     /// Does the argument match the specified value?
     Equals(OsStr),
 }
-
 impl<S: Into<OsStr>> From<S> for ArgPredicate {
     fn from(other: S) -> Self {
         Self::Equals(other.into())

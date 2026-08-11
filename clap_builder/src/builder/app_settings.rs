@@ -2,37 +2,29 @@
 use crate::Arg;
 #[allow(unused)]
 use crate::Command;
-
 #[derive(Default, Copy, Clone, Debug, PartialEq, Eq)]
 pub(crate) struct AppFlags(u32);
-
 impl AppFlags {
     pub(crate) fn set(&mut self, setting: AppSettings) {
         self.0 |= setting.bit();
     }
-
     pub(crate) fn unset(&mut self, setting: AppSettings) {
         self.0 &= !setting.bit();
     }
-
     pub(crate) fn is_set(&self, setting: AppSettings) -> bool {
         self.0 & setting.bit() != 0
     }
-
     pub(crate) fn insert(&mut self, other: Self) {
         self.0 |= other.0;
     }
 }
-
 impl std::ops::BitOr for AppFlags {
     type Output = Self;
-
     fn bitor(mut self, rhs: Self) -> Self::Output {
         self.insert(rhs);
         self
     }
 }
-
 /// Application level settings, which affect how [`Command`] operates
 ///
 /// <div class="warning">
@@ -80,7 +72,6 @@ pub(crate) enum AppSettings {
     Built,
     BinNameBuilt,
 }
-
 impl AppSettings {
     fn bit(self) -> u32 {
         1 << (self as u8)

@@ -1,12 +1,12 @@
 use super::core::display_width;
-
+#[cfg_attr(test, rsubstitute::mock)]
 #[derive(Debug)]
 pub(crate) struct LineWrapper<'w> {
     hard_width: usize,
     line_width: usize,
     indentation: Option<&'w str>,
 }
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 impl<'w> LineWrapper<'w> {
     pub(crate) fn new(hard_width: usize) -> Self {
         Self {
@@ -15,12 +15,10 @@ impl<'w> LineWrapper<'w> {
             indentation: None,
         }
     }
-
     pub(crate) fn reset(&mut self) {
         self.line_width = 0;
         self.indentation = None;
     }
-
     pub(crate) fn wrap(&mut self, mut words: Vec<&'w str>) -> Vec<&'w str> {
         let mut first_word = false;
         if self.indentation.is_none() {
@@ -33,7 +31,6 @@ impl<'w> LineWrapper<'w> {
                 }
             }
         }
-
         let mut i = 0;
         while i < words.len() {
             let word = &words[i];
@@ -41,7 +38,6 @@ impl<'w> LineWrapper<'w> {
             let word_width = display_width(trimmed);
             let trimmed_delta = word.len() - trimmed.len();
             if first_word && 0 < word_width {
-                // Never try to wrap the first word
                 first_word = false;
             } else if self.hard_width < self.line_width + word_width {
                 if 0 < i {
@@ -49,7 +45,6 @@ impl<'w> LineWrapper<'w> {
                     let trimmed = words[prev].trim_end();
                     words[prev] = trimmed;
                 }
-
                 self.line_width = 0;
                 words.insert(i, "\n");
                 i += 1;
@@ -60,7 +55,6 @@ impl<'w> LineWrapper<'w> {
                 }
             }
             self.line_width += word_width + trimmed_delta;
-
             i += 1;
         }
         words

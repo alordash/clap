@@ -1,11 +1,8 @@
-// Std
 use std::any::Any;
 use std::ffi::{OsStr, OsString};
 use std::fmt::Debug;
 use std::iter::{Cloned, Flatten, Map};
 use std::slice::Iter;
-
-// Internal
 use crate::INTERNAL_ERROR_MSG;
 #[cfg(debug_assertions)]
 use crate::builder::Str;
@@ -16,7 +13,7 @@ use crate::util::AnyValue;
 use crate::util::AnyValueId;
 use crate::util::FlatMap;
 use crate::util::Id;
-
+#[cfg_attr(test, rsubstitute::mock)]
 /// Container for parse results.
 ///
 /// Used to get information about the arguments that were supplied to the program at runtime by
@@ -72,7 +69,7 @@ pub struct ArgMatches {
     pub(crate) args: FlatMap<Id, MatchedArg>,
     pub(crate) subcommand: Option<Box<SubCommand>>,
 }
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 /// # Arguments
 impl ArgMatches {
     /// Gets the value of a specific option or positional argument.
@@ -115,10 +112,12 @@ impl ArgMatches {
     /// [positional]: crate::Arg::index()
     /// [`default_value`]: crate::Arg::default_value()
     #[cfg_attr(debug_assertions, track_caller)]
-    pub fn get_one<T: Any + Clone + Send + Sync + 'static>(&self, id: &str) -> Option<&T> {
+    pub fn get_one<T: Any + Clone + Send + Sync + 'static>(
+        &self,
+        id: &str,
+    ) -> Option<&T> {
         MatchesError::unwrap(id, self.try_get_one(id))
     }
-
     /// Gets the value of a specific [`ArgAction::Count`][crate::ArgAction::Count] flag
     ///
     /// # Panic
@@ -146,11 +145,14 @@ impl ArgMatches {
     /// ```
     #[cfg_attr(debug_assertions, track_caller)]
     pub fn get_count(&self, id: &str) -> u8 {
-        *self.get_one::<u8>(id).unwrap_or_else(|| {
-            panic!("arg `{id}`'s `ArgAction` should be `Count` which should provide a default")
-        })
+        *self
+            .get_one::<u8>(id)
+            .unwrap_or_else(|| {
+                panic!(
+                    "arg `{id}`'s `ArgAction` should be `Count` which should provide a default"
+                )
+            })
     }
-
     /// Gets the value of a specific [`ArgAction::SetTrue`][crate::ArgAction::SetTrue] or [`ArgAction::SetFalse`][crate::ArgAction::SetFalse] flag
     ///
     /// # Panic
@@ -187,7 +189,6 @@ impl ArgMatches {
                 )
             })
     }
-
     /// Iterate over values of a specific option or positional argument.
     ///
     /// i.e. an argument that takes multiple values at runtime.
@@ -228,7 +229,6 @@ impl ArgMatches {
     ) -> Option<ValuesRef<'_, T>> {
         MatchesError::unwrap(id, self.try_get_many(id))
     }
-
     /// Iterate over the values passed to each occurrence of an option.
     ///
     /// Each item is itself an iterator containing the arguments passed to a single occurrence
@@ -266,7 +266,6 @@ impl ArgMatches {
     ) -> Option<OccurrencesRef<'_, T>> {
         MatchesError::unwrap(id, self.try_get_occurrences(id))
     }
-
     /// Iterate over the original argument values.
     ///
     /// An `OsStr` on Unix-like systems is any series of bytes, regardless of whether or not they
@@ -313,7 +312,6 @@ impl ArgMatches {
     pub fn get_raw(&self, id: &str) -> Option<RawValues<'_>> {
         MatchesError::unwrap(id, self.try_get_raw(id))
     }
-
     /// Iterate over the original values for each occurrence of an option.
     ///
     /// Similar to [`ArgMatches::get_occurrences`] but returns raw values.
@@ -367,7 +365,6 @@ impl ArgMatches {
     pub fn get_raw_occurrences(&self, id: &str) -> Option<RawOccurrences<'_>> {
         MatchesError::unwrap(id, self.try_get_raw_occurrences(id))
     }
-
     /// Returns the value of a specific option or positional argument.
     ///
     /// i.e. an argument that [takes an additional value][crate::Arg::num_args] at runtime.
@@ -407,10 +404,12 @@ impl ArgMatches {
     /// [positional]: crate::Arg::index()
     /// [`default_value`]: crate::Arg::default_value()
     #[cfg_attr(debug_assertions, track_caller)]
-    pub fn remove_one<T: Any + Clone + Send + Sync + 'static>(&mut self, id: &str) -> Option<T> {
+    pub fn remove_one<T: Any + Clone + Send + Sync + 'static>(
+        &mut self,
+        id: &str,
+    ) -> Option<T> {
         MatchesError::unwrap(id, self.try_remove_one(id))
     }
-
     /// Return values of a specific option or positional argument.
     ///
     /// i.e. an argument that takes multiple values at runtime.
@@ -449,7 +448,6 @@ impl ArgMatches {
     ) -> Option<Values<T>> {
         MatchesError::unwrap(id, self.try_remove_many(id))
     }
-
     /// Return values for each occurrence of an option.
     ///
     /// Each item is itself an iterator containing the arguments passed to a single occurrence of
@@ -488,7 +486,6 @@ impl ArgMatches {
     ) -> Option<Occurrences<T>> {
         MatchesError::unwrap(id, self.try_remove_occurrences(id))
     }
-
     /// Check if values are present for the argument or group id
     ///
     /// <div class="warning">
@@ -523,7 +520,6 @@ impl ArgMatches {
     pub fn contains_id(&self, id: &str) -> bool {
         MatchesError::unwrap(id, self.try_contains_id(id))
     }
-
     /// Iterate over [`Arg`][crate::Arg] and [`ArgGroup`][crate::ArgGroup] [`Id`]s via [`ArgMatches::ids`].
     ///
     /// # Examples
@@ -547,11 +543,8 @@ impl ArgMatches {
     /// );
     /// ```
     pub fn ids(&self) -> IdsRef<'_> {
-        IdsRef {
-            iter: self.args.keys(),
-        }
+        IdsRef { iter: self.args.keys() }
     }
-
     /// Check if any [`Arg`][crate::Arg]s were present on the command line
     ///
     /// See [`ArgMatches::subcommand_name()`] or [`ArgMatches::subcommand()`] to check if a
@@ -576,11 +569,8 @@ impl ArgMatches {
     ///     .unwrap();
     /// assert!(! m.args_present());
     pub fn args_present(&self) -> bool {
-        self.args
-            .values()
-            .any(|v| v.source().map(|s| s.is_explicit()).unwrap_or(false))
+        self.args.values().any(|v| v.source().map(|s| s.is_explicit()).unwrap_or(false))
     }
-
     /// Report where argument value came from
     ///
     /// # Panics
@@ -608,10 +598,8 @@ impl ArgMatches {
     #[cfg_attr(debug_assertions, track_caller)]
     pub fn value_source(&self, id: &str) -> Option<ValueSource> {
         let value = self.get_arg(id);
-
         value.and_then(MatchedArg::source)
     }
-
     /// The first index of that an argument showed up.
     ///
     /// Indices are similar to argv indices, but are not exactly 1:1.
@@ -769,7 +757,6 @@ impl ArgMatches {
         let i = some!(arg.get_index(0));
         Some(i)
     }
-
     /// All indices an argument appeared at when parsing.
     ///
     /// Indices are similar to argv indices, but are not exactly 1:1.
@@ -861,7 +848,7 @@ impl ArgMatches {
         Some(i)
     }
 }
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 /// # Subcommands
 impl ArgMatches {
     /// The name and `ArgMatches` of the current [subcommand].
@@ -922,7 +909,6 @@ impl ArgMatches {
     pub fn subcommand(&self) -> Option<(&str, &ArgMatches)> {
         self.subcommand.as_ref().map(|sc| (&*sc.name, &sc.matches))
     }
-
     /// Return the name and `ArgMatches` of the current [subcommand].
     ///
     /// Subcommand values are put in a child [`ArgMatches`]
@@ -982,7 +968,6 @@ impl ArgMatches {
     pub fn remove_subcommand(&mut self) -> Option<(String, ArgMatches)> {
         self.subcommand.take().map(|sc| (sc.name, sc.matches))
     }
-
     /// The `ArgMatches` for the current [subcommand].
     ///
     /// Subcommand values are put in a child [`ArgMatches`]
@@ -1026,7 +1011,6 @@ impl ArgMatches {
     pub fn subcommand_matches(&self, name: &str) -> Option<&ArgMatches> {
         self.get_subcommand(name).map(|sc| &sc.matches)
     }
-
     /// The name of the current [subcommand].
     ///
     /// Returns `None` if the subcommand wasn't present at runtime,
@@ -1055,7 +1039,6 @@ impl ArgMatches {
     pub fn subcommand_name(&self) -> Option<&str> {
         self.subcommand.as_ref().map(|sc| &*sc.name)
     }
-
     /// Check if a subcommand can be queried
     ///
     /// By default, `ArgMatches` functions assert on undefined `Id`s to help catch programmer
@@ -1065,16 +1048,11 @@ impl ArgMatches {
     #[doc(hidden)]
     pub fn is_valid_subcommand(&self, _name: &str) -> bool {
         #[cfg(debug_assertions)]
-        {
-            _name.is_empty() || self.valid_subcommands.iter().any(|s| *s == _name)
-        }
-        #[cfg(not(debug_assertions))]
-        {
-            true
-        }
+        { _name.is_empty() || self.valid_subcommands.iter().any(|s| *s == _name) }
+        #[cfg(not(debug_assertions))] { true }
     }
 }
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 /// # Advanced
 impl ArgMatches {
     /// Non-panicking version of [`ArgMatches::get_one`]
@@ -1082,55 +1060,51 @@ impl ArgMatches {
         &self,
         id: &str,
     ) -> Result<Option<&T>, MatchesError> {
-        let arg = ok!(self.try_get_arg_t::<T>(id));
+        let arg = ok!(self.try_get_arg_t::< T > (id));
         let value = match arg.and_then(|a| a.first()) {
             Some(value) => value,
             None => {
                 return Ok(None);
             }
         };
-        Ok(value
-            .downcast_ref::<T>()
-            .map(Some)
-            .expect(INTERNAL_ERROR_MSG)) // enforced by `try_get_arg_t`
+        Ok(value.downcast_ref::<T>().map(Some).expect(INTERNAL_ERROR_MSG))
     }
-
     /// Non-panicking version of [`ArgMatches::get_many`]
     pub fn try_get_many<T: Any + Clone + Send + Sync + 'static>(
         &self,
         id: &str,
     ) -> Result<Option<ValuesRef<'_, T>>, MatchesError> {
-        let arg = match ok!(self.try_get_arg_t::<T>(id)) {
+        let arg = match ok!(self.try_get_arg_t::< T > (id)) {
             Some(arg) => arg,
             None => return Ok(None),
         };
         let len = arg.num_vals();
         let values = arg.vals_flatten();
         let values = ValuesRef {
-            // enforced by `try_get_arg_t`
             iter: values.map(unwrap_downcast_ref),
             len,
         };
         Ok(Some(values))
     }
-
     /// Non-panicking version of [`ArgMatches::get_occurrences`]
     pub fn try_get_occurrences<T: Any + Clone + Send + Sync + 'static>(
         &self,
         id: &str,
     ) -> Result<Option<OccurrencesRef<'_, T>>, MatchesError> {
-        let arg = match ok!(self.try_get_arg_t::<T>(id)) {
+        let arg = match ok!(self.try_get_arg_t::< T > (id)) {
             Some(arg) => arg,
             None => return Ok(None),
         };
         let values = arg.vals();
-        Ok(Some(OccurrencesRef {
-            iter: values.map(|g| OccurrenceValuesRef {
-                iter: g.iter().map(unwrap_downcast_ref),
+        Ok(
+            Some(OccurrencesRef {
+                iter: values
+                    .map(|g| OccurrenceValuesRef {
+                        iter: g.iter().map(unwrap_downcast_ref),
+                    }),
             }),
-        }))
+        )
     }
-
     /// Non-panicking version of [`ArgMatches::get_raw`]
     pub fn try_get_raw(&self, id: &str) -> Result<Option<RawValues<'_>>, MatchesError> {
         let arg = match ok!(self.try_get_arg(id)) {
@@ -1145,7 +1119,6 @@ impl ArgMatches {
         };
         Ok(Some(values))
     }
-
     /// Non-panicking version of [`ArgMatches::get_raw_occurrences`]
     pub fn try_get_raw_occurrences(
         &self,
@@ -1157,73 +1130,67 @@ impl ArgMatches {
         };
         let values = arg.raw_vals();
         let occurrences = RawOccurrences {
-            iter: values.map(|g| RawOccurrenceValues {
-                iter: g.iter().map(OsString::as_os_str),
-            }),
+            iter: values
+                .map(|g| RawOccurrenceValues {
+                    iter: g.iter().map(OsString::as_os_str),
+                }),
         };
         Ok(Some(occurrences))
     }
-
     /// Non-panicking version of [`ArgMatches::remove_one`]
     pub fn try_remove_one<T: Any + Clone + Send + Sync + 'static>(
         &mut self,
         id: &str,
     ) -> Result<Option<T>, MatchesError> {
-        match ok!(self.try_remove_arg_t::<T>(id)) {
-            Some(values) => Ok(values
-                .into_vals_flatten()
-                // enforced by `try_get_arg_t`
-                .map(unwrap_downcast_into)
-                .next()),
+        match ok!(self.try_remove_arg_t::< T > (id)) {
+            Some(values) => {
+                Ok(values.into_vals_flatten().map(unwrap_downcast_into).next())
+            }
             None => Ok(None),
         }
     }
-
     /// Non-panicking version of [`ArgMatches::remove_many`]
     pub fn try_remove_many<T: Any + Clone + Send + Sync + 'static>(
         &mut self,
         id: &str,
     ) -> Result<Option<Values<T>>, MatchesError> {
-        let arg = match ok!(self.try_remove_arg_t::<T>(id)) {
+        let arg = match ok!(self.try_remove_arg_t::< T > (id)) {
             Some(arg) => arg,
             None => return Ok(None),
         };
         let len = arg.num_vals();
         let values = arg.into_vals_flatten();
         let values = Values {
-            // enforced by `try_get_arg_t`
             iter: values.map(unwrap_downcast_into),
             len,
         };
         Ok(Some(values))
     }
-
     /// Non-panicking version of [`ArgMatches::remove_occurrences`]
     pub fn try_remove_occurrences<T: Any + Clone + Send + Sync + 'static>(
         &mut self,
         id: &str,
     ) -> Result<Option<Occurrences<T>>, MatchesError> {
-        let arg = match ok!(self.try_remove_arg_t::<T>(id)) {
+        let arg = match ok!(self.try_remove_arg_t::< T > (id)) {
             Some(arg) => arg,
             None => return Ok(None),
         };
         let values = arg.into_vals();
         let occurrences = Occurrences {
-            iter: values.into_iter().map(|g| OccurrenceValues {
-                iter: g.into_iter().map(unwrap_downcast_into),
-            }),
+            iter: values
+                .into_iter()
+                .map(|g| OccurrenceValues {
+                    iter: g.into_iter().map(unwrap_downcast_into),
+                }),
         };
         Ok(Some(occurrences))
     }
-
     /// Non-panicking version of [`ArgMatches::contains_id`]
     pub fn try_contains_id(&self, id: &str) -> Result<bool, MatchesError> {
         ok!(self.verify_arg(id));
-
         let presence = self.args.contains_key(id);
         Ok(presence)
     }
-
     /// Clears the values for the given `id`
     ///
     /// Alternative to [`try_remove_*`][ArgMatches::try_remove_one] when the type is not known.
@@ -1236,15 +1203,13 @@ impl ArgMatches {
         Ok(self.args.remove_entry(id).is_some())
     }
 }
-
-// Private methods
+#[cfg_attr(test, rsubstitute::mock(base))]
 impl ArgMatches {
     #[inline]
     fn try_get_arg(&self, arg: &str) -> Result<Option<&MatchedArg>, MatchesError> {
         ok!(self.verify_arg(arg));
         Ok(self.args.get(arg))
     }
-
     #[inline]
     fn try_get_arg_t<T: Any + Send + Sync + 'static>(
         &self,
@@ -1256,10 +1221,9 @@ impl ArgMatches {
                 return Ok(None);
             }
         };
-        ok!(self.verify_arg_t::<T>(arg));
+        ok!(self.verify_arg_t::< T > (arg));
         Ok(Some(arg))
     }
-
     #[inline]
     fn try_remove_arg_t<T: Any + Send + Sync + 'static>(
         &mut self,
@@ -1272,17 +1236,18 @@ impl ArgMatches {
                 return Ok(None);
             }
         };
-
         let expected = AnyValueId::of::<T>();
         let actual = matched.infer_type_id(expected);
         if actual == expected {
             Ok(Some(matched))
         } else {
             self.args.insert(id, matched);
-            Err(MatchesError::Downcast { actual, expected })
+            Err(MatchesError::Downcast {
+                actual,
+                expected,
+            })
         }
     }
-
     fn verify_arg_t<T: Any + Send + Sync + 'static>(
         &self,
         arg: &MatchedArg,
@@ -1292,16 +1257,18 @@ impl ArgMatches {
         if expected == actual {
             Ok(())
         } else {
-            Err(MatchesError::Downcast { actual, expected })
+            Err(MatchesError::Downcast {
+                actual,
+                expected,
+            })
         }
     }
-
     #[inline]
     fn verify_arg(&self, _arg: &str) -> Result<(), MatchesError> {
         #[cfg(debug_assertions)]
         {
-            if _arg == Id::EXTERNAL || self.valid_args.iter().any(|s| *s == _arg) {
-            } else {
+            if _arg == Id::EXTERNAL || self.valid_args.iter().any(|s| *s == _arg)
+            {} else {
                 debug!(
                     "`{:?}` is not an id of an argument or a group.\n\
                      Make sure you're using the name of the argument itself \
@@ -1313,14 +1280,12 @@ impl ArgMatches {
         }
         Ok(())
     }
-
     #[inline]
     #[cfg_attr(debug_assertions, track_caller)]
     fn get_arg<'s>(&'s self, arg: &str) -> Option<&'s MatchedArg> {
         #[cfg(debug_assertions)]
         {
-            if arg == Id::EXTERNAL || self.valid_args.iter().any(|s| *s == arg) {
-            } else {
+            if arg == Id::EXTERNAL || self.valid_args.iter().any(|s| *s == arg) {} else {
                 panic!(
                     "`{arg:?}` is not an id of an argument or a group.\n\
                      Make sure you're using the name of the argument itself \
@@ -1328,37 +1293,33 @@ impl ArgMatches {
                 );
             }
         }
-
         self.args.get(arg)
     }
-
     #[inline]
     #[cfg_attr(debug_assertions, track_caller)]
     fn get_subcommand(&self, name: &str) -> Option<&SubCommand> {
         #[cfg(debug_assertions)]
         {
-            if name.is_empty() || self.valid_subcommands.iter().any(|s| *s == name) {
-            } else {
+            if name.is_empty() || self.valid_subcommands.iter().any(|s| *s == name)
+            {} else {
                 panic!("`{name}` is not a name of a subcommand.");
             }
         }
-
         if let Some(ref sc) = self.subcommand {
             if sc.name == name {
                 return Some(sc);
             }
         }
-
         None
     }
 }
-
+#[cfg_attr(test, rsubstitute::mock)]
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct SubCommand {
     pub(crate) name: String,
     pub(crate) matches: ArgMatches,
 }
-
+#[cfg_attr(test, rsubstitute::mock)]
 /// Iterate over [`Arg`][crate::Arg] and [`ArgGroup`][crate::ArgGroup] [`Id`]s via [`ArgMatches::ids`].
 ///
 /// # Examples
@@ -1384,10 +1345,9 @@ pub(crate) struct SubCommand {
 pub struct IdsRef<'a> {
     iter: Iter<'a, Id>,
 }
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 impl<'a> Iterator for IdsRef<'a> {
     type Item = &'a Id;
-
     fn next(&mut self) -> Option<&'a Id> {
         self.iter.next()
     }
@@ -1395,15 +1355,15 @@ impl<'a> Iterator for IdsRef<'a> {
         self.iter.size_hint()
     }
 }
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 impl<'a> DoubleEndedIterator for IdsRef<'a> {
     fn next_back(&mut self) -> Option<&'a Id> {
         self.iter.next_back()
     }
 }
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 impl ExactSizeIterator for IdsRef<'_> {}
-
+#[cfg_attr(test, rsubstitute::mock)]
 /// Iterate over multiple values for an argument via [`ArgMatches::remove_many`].
 ///
 /// # Examples
@@ -1430,10 +1390,9 @@ pub struct Values<T> {
     iter: Map<Flatten<std::vec::IntoIter<Vec<AnyValue>>>, fn(AnyValue) -> T>,
     len: usize,
 }
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 impl<T> Iterator for Values<T> {
     type Item = T;
-
     fn next(&mut self) -> Option<Self::Item> {
         if let Some(next) = self.iter.next() {
             self.len -= 1;
@@ -1446,7 +1405,7 @@ impl<T> Iterator for Values<T> {
         (self.len, Some(self.len))
     }
 }
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 impl<T> DoubleEndedIterator for Values<T> {
     fn next_back(&mut self) -> Option<Self::Item> {
         if let Some(next) = self.iter.next_back() {
@@ -1457,9 +1416,9 @@ impl<T> DoubleEndedIterator for Values<T> {
         }
     }
 }
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 impl<T> ExactSizeIterator for Values<T> {}
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 /// Creates an empty iterator.
 impl<T> Default for Values<T> {
     fn default() -> Self {
@@ -1470,7 +1429,7 @@ impl<T> Default for Values<T> {
         }
     }
 }
-
+#[cfg_attr(test, rsubstitute::mock)]
 /// Iterate over multiple values for an argument via [`ArgMatches::get_many`].
 ///
 /// # Examples
@@ -1498,10 +1457,9 @@ pub struct ValuesRef<'a, T> {
     iter: Map<Flatten<Iter<'a, Vec<AnyValue>>>, fn(&AnyValue) -> &T>,
     len: usize,
 }
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 impl<'a, T: 'a> Iterator for ValuesRef<'a, T> {
     type Item = &'a T;
-
     fn next(&mut self) -> Option<Self::Item> {
         if let Some(next) = self.iter.next() {
             self.len -= 1;
@@ -1514,7 +1472,7 @@ impl<'a, T: 'a> Iterator for ValuesRef<'a, T> {
         (self.len, Some(self.len))
     }
 }
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 impl<'a, T: 'a> DoubleEndedIterator for ValuesRef<'a, T> {
     fn next_back(&mut self) -> Option<Self::Item> {
         if let Some(next) = self.iter.next_back() {
@@ -1525,9 +1483,9 @@ impl<'a, T: 'a> DoubleEndedIterator for ValuesRef<'a, T> {
         }
     }
 }
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 impl<'a, T: 'a> ExactSizeIterator for ValuesRef<'a, T> {}
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 /// Creates an empty iterator.
 impl<'a, T: 'a> Default for ValuesRef<'a, T> {
     fn default() -> Self {
@@ -1538,7 +1496,7 @@ impl<'a, T: 'a> Default for ValuesRef<'a, T> {
         }
     }
 }
-
+#[cfg_attr(test, rsubstitute::mock)]
 /// Iterate over raw argument values via [`ArgMatches::get_raw`].
 ///
 /// # Examples
@@ -1571,10 +1529,9 @@ pub struct RawValues<'a> {
     iter: Map<Flatten<Iter<'a, Vec<OsString>>>, fn(&OsString) -> &OsStr>,
     len: usize,
 }
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 impl<'a> Iterator for RawValues<'a> {
     type Item = &'a OsStr;
-
     fn next(&mut self) -> Option<&'a OsStr> {
         if let Some(next) = self.iter.next() {
             self.len -= 1;
@@ -1587,7 +1544,7 @@ impl<'a> Iterator for RawValues<'a> {
         (self.len, Some(self.len))
     }
 }
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 impl<'a> DoubleEndedIterator for RawValues<'a> {
     fn next_back(&mut self) -> Option<&'a OsStr> {
         if let Some(next) = self.iter.next_back() {
@@ -1598,9 +1555,9 @@ impl<'a> DoubleEndedIterator for RawValues<'a> {
         }
     }
 }
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 impl ExactSizeIterator for RawValues<'_> {}
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 /// Creates an empty iterator.
 impl Default for RawValues<'_> {
     fn default() -> Self {
@@ -1611,38 +1568,34 @@ impl Default for RawValues<'_> {
         }
     }
 }
-
-// The following were taken and adapted from vec_map source
-// repo: https://github.com/contain-rs/vec-map
-// commit: be5e1fa3c26e351761b33010ddbdaf5f05dbcc33
-// license: MIT - Copyright (c) 2015 The Rust Project Developers
-
+#[cfg_attr(test, rsubstitute::mock)]
 #[derive(Clone, Debug)]
 pub struct Occurrences<T> {
     #[allow(clippy::type_complexity)]
-    iter: Map<std::vec::IntoIter<Vec<AnyValue>>, fn(Vec<AnyValue>) -> OccurrenceValues<T>>,
+    iter: Map<
+        std::vec::IntoIter<Vec<AnyValue>>,
+        fn(Vec<AnyValue>) -> OccurrenceValues<T>,
+    >,
 }
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 impl<T> Iterator for Occurrences<T> {
     type Item = OccurrenceValues<T>;
-
     fn next(&mut self) -> Option<Self::Item> {
         self.iter.next()
     }
-
     fn size_hint(&self) -> (usize, Option<usize>) {
         self.iter.size_hint()
     }
 }
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 impl<T> DoubleEndedIterator for Occurrences<T> {
     fn next_back(&mut self) -> Option<Self::Item> {
         self.iter.next_back()
     }
 }
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 impl<T> ExactSizeIterator for Occurrences<T> {}
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 impl<T> Default for Occurrences<T> {
     fn default() -> Self {
         let empty: Vec<Vec<AnyValue>> = Default::default();
@@ -1651,54 +1604,50 @@ impl<T> Default for Occurrences<T> {
         }
     }
 }
-
+#[cfg_attr(test, rsubstitute::mock)]
 #[derive(Clone, Debug)]
 pub struct OccurrenceValues<T> {
     #[allow(clippy::type_complexity)]
     iter: Map<std::vec::IntoIter<AnyValue>, fn(AnyValue) -> T>,
 }
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 impl<T> Iterator for OccurrenceValues<T> {
     type Item = T;
-
     fn next(&mut self) -> Option<Self::Item> {
         self.iter.next()
     }
-
     fn size_hint(&self) -> (usize, Option<usize>) {
         self.iter.size_hint()
     }
 }
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 impl<T> DoubleEndedIterator for OccurrenceValues<T> {
     fn next_back(&mut self) -> Option<Self::Item> {
         self.iter.next_back()
     }
 }
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 impl<T> ExactSizeIterator for OccurrenceValues<T> {}
-
+#[cfg_attr(test, rsubstitute::mock)]
 #[derive(Clone, Debug)]
 pub struct OccurrencesRef<'a, T> {
     #[allow(clippy::type_complexity)]
     iter: Map<Iter<'a, Vec<AnyValue>>, fn(&Vec<AnyValue>) -> OccurrenceValuesRef<'_, T>>,
 }
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 impl<'a, T> Iterator for OccurrencesRef<'a, T>
 where
     Self: 'a,
 {
     type Item = OccurrenceValuesRef<'a, T>;
-
     fn next(&mut self) -> Option<Self::Item> {
         self.iter.next()
     }
-
     fn size_hint(&self) -> (usize, Option<usize>) {
         self.iter.size_hint()
     }
 }
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 impl<'a, T> DoubleEndedIterator for OccurrencesRef<'a, T>
 where
     Self: 'a,
@@ -1707,8 +1656,12 @@ where
         self.iter.next_back()
     }
 }
-
-impl<'a, T> ExactSizeIterator for OccurrencesRef<'a, T> where Self: 'a {}
+#[cfg_attr(test, rsubstitute::mock(base))]
+impl<'a, T> ExactSizeIterator for OccurrencesRef<'a, T>
+where
+    Self: 'a,
+{}
+#[cfg_attr(test, rsubstitute::mock(base))]
 impl<T> Default for OccurrencesRef<'_, T> {
     fn default() -> Self {
         static EMPTY: [Vec<AnyValue>; 0] = [];
@@ -1717,28 +1670,26 @@ impl<T> Default for OccurrencesRef<'_, T> {
         }
     }
 }
-
+#[cfg_attr(test, rsubstitute::mock)]
 #[derive(Clone, Debug)]
 pub struct OccurrenceValuesRef<'a, T> {
     #[allow(clippy::type_complexity)]
     iter: Map<Iter<'a, AnyValue>, fn(&AnyValue) -> &T>,
 }
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 impl<'a, T> Iterator for OccurrenceValuesRef<'a, T>
 where
     Self: 'a,
 {
     type Item = &'a T;
-
     fn next(&mut self) -> Option<Self::Item> {
         self.iter.next()
     }
-
     fn size_hint(&self) -> (usize, Option<usize>) {
         self.iter.size_hint()
     }
 }
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 impl<'a, T> DoubleEndedIterator for OccurrenceValuesRef<'a, T>
 where
     Self: 'a,
@@ -1747,35 +1698,36 @@ where
         self.iter.next_back()
     }
 }
-
-impl<'a, T> ExactSizeIterator for OccurrenceValuesRef<'a, T> where Self: 'a {}
-
+#[cfg_attr(test, rsubstitute::mock(base))]
+impl<'a, T> ExactSizeIterator for OccurrenceValuesRef<'a, T>
+where
+    Self: 'a,
+{}
+#[cfg_attr(test, rsubstitute::mock)]
 #[derive(Clone, Debug)]
 pub struct RawOccurrences<'a> {
     #[allow(clippy::type_complexity)]
     iter: Map<Iter<'a, Vec<OsString>>, fn(&Vec<OsString>) -> RawOccurrenceValues<'_>>,
 }
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 impl<'a> Iterator for RawOccurrences<'a> {
     type Item = RawOccurrenceValues<'a>;
-
     fn next(&mut self) -> Option<Self::Item> {
         self.iter.next()
     }
-
     fn size_hint(&self) -> (usize, Option<usize>) {
         self.iter.size_hint()
     }
 }
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 impl DoubleEndedIterator for RawOccurrences<'_> {
     fn next_back(&mut self) -> Option<Self::Item> {
         self.iter.next_back()
     }
 }
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 impl ExactSizeIterator for RawOccurrences<'_> {}
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 impl Default for RawOccurrences<'_> {
     fn default() -> Self {
         static EMPTY: [Vec<OsString>; 0] = [];
@@ -1784,28 +1736,26 @@ impl Default for RawOccurrences<'_> {
         }
     }
 }
-
+#[cfg_attr(test, rsubstitute::mock)]
 #[derive(Clone, Debug)]
 pub struct RawOccurrenceValues<'a> {
     #[allow(clippy::type_complexity)]
     iter: Map<Iter<'a, OsString>, fn(&OsString) -> &OsStr>,
 }
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 impl<'a> Iterator for RawOccurrenceValues<'a>
 where
     Self: 'a,
 {
     type Item = &'a OsStr;
-
     fn next(&mut self) -> Option<Self::Item> {
         self.iter.next()
     }
-
     fn size_hint(&self) -> (usize, Option<usize>) {
         self.iter.size_hint()
     }
 }
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 impl<'a> DoubleEndedIterator for RawOccurrenceValues<'a>
 where
     Self: 'a,
@@ -1814,9 +1764,9 @@ where
         self.iter.next_back()
     }
 }
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 impl ExactSizeIterator for RawOccurrenceValues<'_> {}
-
+#[cfg_attr(test, rsubstitute::mock)]
 /// Iterate over indices for where an argument appeared when parsing, via [`ArgMatches::indices_of`]
 ///
 /// # Examples
@@ -1843,10 +1793,9 @@ pub struct Indices<'a> {
     iter: Cloned<Iter<'a, usize>>,
     len: usize,
 }
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 impl Iterator for Indices<'_> {
     type Item = usize;
-
     fn next(&mut self) -> Option<usize> {
         if let Some(next) = self.iter.next() {
             self.len -= 1;
@@ -1859,7 +1808,7 @@ impl Iterator for Indices<'_> {
         (self.len, Some(self.len))
     }
 }
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 impl DoubleEndedIterator for Indices<'_> {
     fn next_back(&mut self) -> Option<usize> {
         if let Some(next) = self.iter.next_back() {
@@ -1870,61 +1819,58 @@ impl DoubleEndedIterator for Indices<'_> {
         }
     }
 }
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 impl ExactSizeIterator for Indices<'_> {}
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 /// Creates an empty iterator.
 impl Default for Indices<'_> {
     fn default() -> Self {
         static EMPTY: [usize; 0] = [];
-        // This is never called because the iterator is empty:
         Indices {
             iter: EMPTY[..].iter().cloned(),
             len: 0,
         }
     }
 }
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 #[track_caller]
 fn unwrap_downcast_ref<T: Any + Clone + Send + Sync + 'static>(value: &AnyValue) -> &T {
     value.downcast_ref().expect(INTERNAL_ERROR_MSG)
 }
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 #[track_caller]
 fn unwrap_downcast_into<T: Any + Clone + Send + Sync + 'static>(value: AnyValue) -> T {
     value.downcast_into().expect(INTERNAL_ERROR_MSG)
 }
-
 #[cfg(test)]
 mod tests {
     use super::*;
-
     use crate::ArgAction;
-
+    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn check_auto_traits() {
-        static_assertions::assert_impl_all!(ArgMatches: Send, Sync, Unpin);
+        static_assertions::assert_impl_all!(ArgMatches : Send, Sync, Unpin);
     }
-
+    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn test_default_raw_values() {
         let mut values: RawValues<'_> = Default::default();
         assert_eq!(values.next(), None);
     }
-
+    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn test_default_indices() {
         let mut indices: Indices<'_> = Indices::default();
         assert_eq!(indices.next(), None);
     }
-
+    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn test_default_indices_with_shorter_lifetime() {
         let matches = ArgMatches::default();
         let mut indices = matches.indices_of("").unwrap_or_default();
         assert_eq!(indices.next(), None);
     }
-
+    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn values_exact_size() {
         let l = crate::Command::new("test")
@@ -1941,7 +1887,7 @@ mod tests {
             .count();
         assert_eq!(l, 1);
     }
-
+    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn os_values_exact_size() {
         let l = crate::Command::new("test")
@@ -1959,7 +1905,7 @@ mod tests {
             .count();
         assert_eq!(l, 1);
     }
-
+    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn indices_exact_size() {
         let l = crate::Command::new("test")
@@ -1976,7 +1922,7 @@ mod tests {
             .len();
         assert_eq!(l, 1);
     }
-
+    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn rev_iter() {
         let mut matches = crate::Command::new("myprog")
@@ -1984,32 +1930,26 @@ mod tests {
             .arg(crate::Arg::new("b").short('b').action(ArgAction::Append))
             .try_get_matches_from(vec!["myprog", "-a1", "-b1", "-b3"])
             .unwrap();
-
         let a_index = matches
             .indices_of("a")
             .expect("missing aopt indices")
             .collect::<Vec<_>>();
-        dbg!(&a_index);
-        let a_value = matches
-            .remove_many::<String>("a")
-            .expect("missing aopt values");
-        dbg!(&a_value);
+        dbg!(& a_index);
+        let a_value = matches.remove_many::<String>("a").expect("missing aopt values");
+        dbg!(& a_value);
         let a = a_index.into_iter().zip(a_value).rev().collect::<Vec<_>>();
         dbg!(a);
-
         let b_index = matches
             .indices_of("b")
             .expect("missing aopt indices")
             .collect::<Vec<_>>();
-        dbg!(&b_index);
-        let b_value = matches
-            .remove_many::<String>("b")
-            .expect("missing aopt values");
-        dbg!(&b_value);
+        dbg!(& b_index);
+        let b_value = matches.remove_many::<String>("b").expect("missing aopt values");
+        dbg!(& b_value);
         let b = b_index.into_iter().zip(b_value).rev().collect::<Vec<_>>();
         dbg!(b);
     }
-
+    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn delete_id_without_returning() {
         let mut matches = crate::Command::new("myprog")
@@ -2020,23 +1960,19 @@ mod tests {
             .unwrap();
         let matches_ids_count = matches.ids().count();
         assert_eq!(matches_ids_count, 2);
-
         let _ = matches
             .try_clear_id("d")
             .expect_err("should fail due to there is no arg 'd'");
-
         let c_was_presented = matches
             .try_clear_id("c")
             .expect("doesn't fail because there is no matches for 'c' argument");
-        assert!(!c_was_presented);
+        assert!(! c_was_presented);
         let matches_ids_count = matches.ids().count();
         assert_eq!(matches_ids_count, 2);
-
         let b_was_presented = matches.try_clear_id("b").unwrap();
         assert!(b_was_presented);
         let matches_ids_count = matches.ids().count();
         assert_eq!(matches_ids_count, 1);
-
         let a_was_presented = matches.try_clear_id("a").unwrap();
         assert!(a_was_presented);
         let matches_ids_count = matches.ids().count();

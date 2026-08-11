@@ -1,7 +1,6 @@
 //! Terminal [`Styles`] for help and error output
-
 pub use anstyle::*;
-
+#[cfg_attr(test, rsubstitute::mock)]
 /// Terminal styling definitions
 ///
 /// See also [`Command::styles`][crate::Command::styles].
@@ -19,7 +18,7 @@ pub use anstyle::*;
 ///     .placeholder(AnsiColor::Green.on_default());
 /// ```
 #[derive(Clone, Debug)]
-#[allow(missing_copy_implementations)] // Large enough type that I want an explicit `clone()` for now
+#[allow(missing_copy_implementations)]
 pub struct Styles {
     header: Style,
     error: Style,
@@ -31,7 +30,7 @@ pub struct Styles {
     context: Style,
     context_value: Option<Style>,
 }
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 impl Styles {
     /// No terminal styling
     pub const fn plain() -> Self {
@@ -47,16 +46,13 @@ impl Styles {
             context_value: None,
         }
     }
-
     /// Default terminal styling
     pub const fn styled() -> Self {
         #[cfg(feature = "color")]
         {
             Self {
                 header: Style::new().bold().underline(),
-                error: Style::new()
-                    .fg_color(Some(Color::Ansi(AnsiColor::Red)))
-                    .bold(),
+                error: Style::new().fg_color(Some(Color::Ansi(AnsiColor::Red))).bold(),
                 usage: Style::new().bold().underline(),
                 literal: Style::new().bold(),
                 placeholder: Style::new(),
@@ -66,61 +62,50 @@ impl Styles {
                 context_value: None,
             }
         }
-        #[cfg(not(feature = "color"))]
-        {
-            Self::plain()
-        }
+        #[cfg(not(feature = "color"))] { Self::plain() }
     }
-
     /// General Heading style, e.g. [`help_heading`][crate::Arg::help_heading]
     #[inline]
     pub const fn header(mut self, style: Style) -> Self {
         self.header = style;
         self
     }
-
     /// Error heading
     #[inline]
     pub const fn error(mut self, style: Style) -> Self {
         self.error = style;
         self
     }
-
     /// Usage heading
     #[inline]
     pub const fn usage(mut self, style: Style) -> Self {
         self.usage = style;
         self
     }
-
     /// Literal command-line syntax, e.g. `--help`
     #[inline]
     pub const fn literal(mut self, style: Style) -> Self {
         self.literal = style;
         self
     }
-
     /// Descriptions within command-line syntax, e.g. [`value_name`][crate::Arg::value_name]
     #[inline]
     pub const fn placeholder(mut self, style: Style) -> Self {
         self.placeholder = style;
         self
     }
-
     /// Highlight suggested usage
     #[inline]
     pub const fn valid(mut self, style: Style) -> Self {
         self.valid = style;
         self
     }
-
     /// Highlight invalid usage
     #[inline]
     pub const fn invalid(mut self, style: Style) -> Self {
         self.invalid = style;
         self
     }
-
     /// Highlight all specified contexts, e.g. `[default: false]`
     ///
     /// To specialize the style of the value within the context, see [`Styles::context_value`]
@@ -129,7 +114,6 @@ impl Styles {
         self.context = style;
         self
     }
-
     /// Highlight values within all of the context, e.g. the `false` in `[default: false]`
     ///
     /// If not explicitly set, falls back to `context`'s style.
@@ -139,7 +123,7 @@ impl Styles {
         self
     }
 }
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 /// Reflection
 impl Styles {
     /// General Heading style, e.g. [`help_heading`][crate::Arg::help_heading]
@@ -147,43 +131,36 @@ impl Styles {
     pub const fn get_header(&self) -> &Style {
         &self.header
     }
-
     /// Error heading
     #[inline(always)]
     pub const fn get_error(&self) -> &Style {
         &self.error
     }
-
     /// Usage heading
     #[inline(always)]
     pub const fn get_usage(&self) -> &Style {
         &self.usage
     }
-
     /// Literal command-line syntax, e.g. `--help`
     #[inline(always)]
     pub const fn get_literal(&self) -> &Style {
         &self.literal
     }
-
     /// Descriptions within command-line syntax, e.g. [`value_name`][crate::Arg::value_name]
     #[inline(always)]
     pub const fn get_placeholder(&self) -> &Style {
         &self.placeholder
     }
-
     /// Highlight suggested usage
     #[inline(always)]
     pub const fn get_valid(&self) -> &Style {
         &self.valid
     }
-
     /// Highlight invalid usage
     #[inline(always)]
     pub const fn get_invalid(&self) -> &Style {
         &self.invalid
     }
-
     /// Highlight all specified contexts, e.g. `[default: false]`
     ///
     /// To specialize the style of the value within the context, see [`Styles::context_value`]
@@ -191,7 +168,6 @@ impl Styles {
     pub const fn get_context(&self) -> &Style {
         &self.context
     }
-
     /// Highlight values within all of the context, e.g. the `false` in `[default: false]`
     ///
     /// If not explicitly set, falls back to `context`'s style.
@@ -203,15 +179,14 @@ impl Styles {
         }
     }
 }
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 impl super::AppExt for Styles {}
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 impl Default for Styles {
     fn default() -> Self {
         Self::styled()
     }
 }
-
 impl Default for &'_ Styles {
     fn default() -> Self {
         const STYLES: Styles = Styles::styled();

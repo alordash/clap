@@ -1,8 +1,6 @@
 #[cfg(debug_assertions)]
 use crate::util::AnyValueId;
-
 use crate::builder::ValueRange;
-
 /// Behavior of arguments when they are encountered while parsing
 ///
 /// # Examples
@@ -30,7 +28,7 @@ use crate::builder::ValueRange;
 /// ```
 #[derive(Clone, Debug)]
 #[non_exhaustive]
-#[allow(missing_copy_implementations)] // In the future, we may accept `Box<dyn ...>`
+#[allow(missing_copy_implementations)]
 pub enum ArgAction {
     /// When encountered, store the associated value(s) in [`ArgMatches`][crate::ArgMatches]
     ///
@@ -351,7 +349,6 @@ pub enum ArgAction {
     /// ```
     Version,
 }
-
 impl ArgAction {
     /// Returns whether this action accepts values on the command-line
     ///
@@ -370,7 +367,6 @@ impl ArgAction {
             Self::Version => false,
         }
     }
-
     #[cfg(debug_assertions)]
     pub(crate) fn max_num_args(&self) -> ValueRange {
         match self {
@@ -385,7 +381,6 @@ impl ArgAction {
             Self::Version => ValueRange::EMPTY,
         }
     }
-
     pub(crate) fn default_num_args(&self) -> ValueRange {
         match self {
             Self::Set => ValueRange::SINGLE,
@@ -399,7 +394,6 @@ impl ArgAction {
             Self::Version => ValueRange::EMPTY,
         }
     }
-
     pub(crate) fn default_value(&self) -> Option<&'static std::ffi::OsStr> {
         match self {
             Self::Set => None,
@@ -413,7 +407,6 @@ impl ArgAction {
             Self::Version => None,
         }
     }
-
     pub(crate) fn default_missing_value(&self) -> Option<&'static std::ffi::OsStr> {
         match self {
             Self::Set => None,
@@ -427,7 +420,6 @@ impl ArgAction {
             Self::Version => None,
         }
     }
-
     pub(crate) fn default_value_parser(&self) -> Option<super::ValueParser> {
         match self {
             Self::Set => None,
@@ -441,7 +433,6 @@ impl ArgAction {
             Self::Version => None,
         }
     }
-
     #[cfg(debug_assertions)]
     pub(crate) fn value_type_id(&self) -> Option<AnyValueId> {
         match self {
@@ -457,5 +448,4 @@ impl ArgAction {
         }
     }
 }
-
 pub(crate) type CountType = u8;

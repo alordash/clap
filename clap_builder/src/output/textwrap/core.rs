@@ -1,3 +1,4 @@
+#[cfg_attr(test, rsubstitute::mock(base))]
 /// Compute the display width of `text`
 ///
 /// # Examples
@@ -54,10 +55,8 @@
 #[inline(never)]
 pub(crate) fn display_width(text: &str) -> usize {
     let mut width = 0;
-
     let mut control_sequence = false;
     let control_terminate: char = 'm';
-
     for ch in text.chars() {
         if ch.is_ascii_control() {
             control_sequence = true;
@@ -65,91 +64,70 @@ pub(crate) fn display_width(text: &str) -> usize {
             control_sequence = false;
             continue;
         }
-
         if !control_sequence {
             width += ch_width(ch);
         }
     }
     width
 }
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 #[cfg(feature = "unicode")]
 fn ch_width(ch: char) -> usize {
     unicode_width::UnicodeWidthChar::width(ch).unwrap_or(0)
 }
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 #[cfg(not(feature = "unicode"))]
 fn ch_width(_: char) -> usize {
     1
 }
-
 #[cfg(test)]
 mod tests {
     use super::*;
-
     #[cfg(feature = "unicode")]
     use unicode_width::UnicodeWidthChar;
-
+    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn emojis_have_correct_width() {
         use unic_emoji_char::is_emoji;
-
-        // Emojis in the Basic Latin (ASCII) and Latin-1 Supplement
-        // blocks all have a width of 1 column. This includes
-        // characters such as '#' and '©'.
         for ch in '\u{1}'..'\u{FF}' {
             if is_emoji(ch) {
                 let desc = format!("{:?} U+{:04X}", ch, ch as u32);
-
                 #[cfg(feature = "unicode")]
                 assert_eq!(ch.width().unwrap(), 1, "char: {desc}");
-
                 #[cfg(not(feature = "unicode"))]
                 assert_eq!(ch_width(ch), 1, "char: {desc}");
             }
         }
-
-        // Emojis in the remaining blocks of the Basic Multilingual
-        // Plane (BMP), in the Supplementary Multilingual Plane (SMP),
-        // and in the Supplementary Ideographic Plane (SIP), are all 1
-        // or 2 columns wide when unicode-width is used, and always 2
-        // columns wide otherwise. This includes all of our favorite
-        // emojis such as 😊.
         for ch in '\u{FF}'..'\u{2FFFF}' {
             if is_emoji(ch) {
                 let desc = format!("{:?} U+{:04X}", ch, ch as u32);
-
                 #[cfg(feature = "unicode")]
                 assert!(ch.width().unwrap() <= 2, "char: {desc}");
-
                 #[cfg(not(feature = "unicode"))]
                 assert_eq!(ch_width(ch), 1, "char: {desc}");
             }
         }
-
-        // The remaining planes contain almost no assigned code points
-        // and thus also no emojis.
     }
-
+    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     #[cfg(feature = "unicode")]
     fn display_width_works() {
-        assert_eq!("Café Plain".len(), 11); // “é” is two bytes
+        assert_eq!("Café Plain".len(), 11);
         assert_eq!(display_width("Café Plain"), 10);
     }
-
+    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     #[cfg(feature = "unicode")]
     fn display_width_narrow_emojis() {
         assert_eq!(display_width("⁉"), 1);
     }
-
+    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     #[cfg(feature = "unicode")]
     fn display_width_narrow_emojis_variant_selector() {
         assert_eq!(display_width("⁉\u{fe0f}"), 1);
     }
-
+    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     #[cfg(feature = "unicode")]
     fn display_width_emojis() {

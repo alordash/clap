@@ -1,6 +1,6 @@
 use crate::Arg;
 use crate::Command;
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 #[test]
 fn propagate_version() {
     let mut cmd = Command::new("test")
@@ -8,12 +8,9 @@ fn propagate_version() {
         .version("1.1")
         .subcommand(Command::new("sub1"));
     cmd._propagate();
-    assert_eq!(
-        cmd.get_subcommands().next().unwrap().get_version(),
-        Some("1.1")
-    );
+    assert_eq!(cmd.get_subcommands().next().unwrap().get_version(), Some("1.1"));
 }
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 #[test]
 fn global_setting() {
     let mut cmd = Command::new("test")
@@ -21,36 +18,26 @@ fn global_setting() {
         .subcommand(Command::new("subcmd"));
     cmd._propagate();
     assert!(
-        cmd.get_subcommands()
-            .find(|s| s.get_name() == "subcmd")
-            .unwrap()
-            .is_disable_version_flag_set()
+        cmd.get_subcommands().find(| s | s.get_name() == "subcmd").unwrap()
+        .is_disable_version_flag_set()
     );
 }
-
-// This test will *fail to compile* if Command is not Send + Sync
+#[cfg_attr(test, rsubstitute::mock(base))]
 #[test]
 fn app_send_sync() {
     fn foo<T: Send + Sync>(_: T) {}
     foo(Command::new("test"));
 }
-
+#[cfg_attr(test, rsubstitute::mock(base))]
 #[test]
 fn issue_2090() {
     let mut cmd = Command::new("cmd")
         .disable_version_flag(true)
         .subcommand(Command::new("sub"));
     cmd._build_self(false);
-
-    assert!(
-        cmd.get_subcommands()
-            .next()
-            .unwrap()
-            .is_disable_version_flag_set()
-    );
+    assert!(cmd.get_subcommands().next().unwrap().is_disable_version_flag_set());
 }
-
-// This test will *fail to compile* if Arg is not Send + Sync
+#[cfg_attr(test, rsubstitute::mock(base))]
 #[test]
 fn arg_send_sync() {
     fn foo<T: Send + Sync>(_: T) {}
