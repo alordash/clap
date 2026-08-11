@@ -50,7 +50,7 @@ impl Ty {
         }
     }
 }
-#[rsubstitute::mock(base)]
+#[cfg_attr(test, rsubstitute::mock(base))]
 pub(crate) fn inner_type(field_ty: &Type) -> &Type {
     let ty = Ty::from_syn_ty(field_ty);
     match *ty {
@@ -64,11 +64,11 @@ pub(crate) fn inner_type(field_ty: &Type) -> &Type {
         _ => field_ty,
     }
 }
-#[rsubstitute::mock(base)]
+#[cfg_attr(test, rsubstitute::mock(base))]
 pub(crate) fn sub_type(ty: &Type) -> Option<&Type> {
     subty_if(ty, |_| true)
 }
-#[rsubstitute::mock(base)]
+#[cfg_attr(test, rsubstitute::mock(base))]
 fn only_last_segment(mut ty: &Type) -> Option<&PathSegment> {
     while let Type::Group(syn::TypeGroup { elem, .. }) = ty {
         ty = elem;
@@ -84,7 +84,7 @@ fn only_last_segment(mut ty: &Type) -> Option<&PathSegment> {
         _ => None,
     }
 }
-#[rsubstitute::mock(base)]
+#[cfg_attr(test, rsubstitute::mock)]
 fn subty_if<F>(ty: &Type, f: F) -> Option<&Type>
 where
     F: FnOnce(&PathSegment) -> bool,
@@ -106,11 +106,11 @@ where
             }
         })
 }
-#[rsubstitute::mock(base)]
+#[cfg_attr(test, rsubstitute::mock(base))]
 pub(crate) fn subty_if_name<'a>(ty: &'a Type, name: &str) -> Option<&'a Type> {
     subty_if(ty, |seg| seg.ident == name)
 }
-#[rsubstitute::mock(base)]
+#[cfg_attr(test, rsubstitute::mock(base))]
 pub(crate) fn is_simple_ty(ty: &Type, name: &str) -> bool {
     only_last_segment(ty)
         .map(|segment| {
@@ -122,28 +122,28 @@ pub(crate) fn is_simple_ty(ty: &Type, name: &str) -> bool {
         })
         .unwrap_or(false)
 }
-#[rsubstitute::mock(base)]
+#[cfg_attr(test, rsubstitute::mock(base))]
 fn is_generic_ty(ty: &Type, name: &str) -> bool {
     subty_if_name(ty, name).is_some()
 }
-#[rsubstitute::mock(base)]
+#[cfg_attr(test, rsubstitute::mock(base))]
 fn is_unit_ty(ty: &Type) -> bool {
     if let Type::Tuple(tuple) = ty { tuple.elems.is_empty() } else { false }
 }
-#[rsubstitute::mock(base)]
+#[cfg_attr(test, rsubstitute::mock)]
 fn only_one<I, T>(mut iter: I) -> Option<T>
 where
     I: Iterator<Item = T>,
 {
     iter.next().filter(|_| iter.next().is_none())
 }
-#[rsubstitute::mock(base)]
+#[cfg_attr(test, rsubstitute::mock(base))]
 #[cfg(feature = "unstable-v5")]
 fn get_vec_ty(ty: &Type, vec_ty: Ty, vecvec_ty: Ty) -> Option<Ty> {
     subty_if_name(ty, "Vec")
         .map(|subty| { if is_generic_ty(subty, "Vec") { vecvec_ty } else { vec_ty } })
 }
-#[rsubstitute::mock(base)]
+#[cfg_attr(test, rsubstitute::mock(base))]
 #[cfg(not(feature = "unstable-v5"))]
 fn get_vec_ty(ty: &Type, vec_ty: Ty, _vecvec_ty: Ty) -> Option<Ty> {
     is_generic_ty(ty, "Vec").then_some(vec_ty)

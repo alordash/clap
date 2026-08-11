@@ -17,7 +17,6 @@ mod derives;
 mod dummies;
 mod item;
 mod utils;
-#[rsubstitute::mock(base)]
 /// Generates the `ValueEnum` impl.
 #[proc_macro_derive(ValueEnum, attributes(clap, value))]
 pub fn value_enum(input: TokenStream) -> TokenStream {
@@ -29,7 +28,6 @@ pub fn value_enum(input: TokenStream) -> TokenStream {
         })
         .into()
 }
-#[rsubstitute::mock(base)]
 /// Generates the `Parser` implementation.
 ///
 /// This is far less verbose than defining the `clap::Command` struct manually,
@@ -63,7 +61,6 @@ pub fn parser(input: TokenStream) -> TokenStream {
         })
         .into()
 }
-#[rsubstitute::mock(base)]
 /// Generates the `Subcommand` impl.
 #[proc_macro_derive(Subcommand, attributes(clap, command, arg, group))]
 pub fn subcommand(input: TokenStream) -> TokenStream {
@@ -75,7 +72,6 @@ pub fn subcommand(input: TokenStream) -> TokenStream {
         })
         .into()
 }
-#[rsubstitute::mock(base)]
 /// Generates the `Args` impl.
 #[proc_macro_derive(Args, attributes(clap, command, arg, group))]
 pub fn args(input: TokenStream) -> TokenStream {
@@ -87,7 +83,7 @@ pub fn args(input: TokenStream) -> TokenStream {
         })
         .into()
 }
-#[rsubstitute::mock(base)]
+#[cfg_attr(test, rsubstitute::mock(base))]
 fn to_compile_error(
     error: syn::Error,
     dummy: proc_macro2::TokenStream,

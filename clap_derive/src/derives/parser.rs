@@ -10,7 +10,7 @@ use crate::derives::args::collect_args_fields;
 use crate::derives::{args, into_app, subcommand};
 use crate::item::Item;
 use crate::item::Name;
-#[rsubstitute::mock(base)]
+#[cfg_attr(test, rsubstitute::mock(base))]
 pub(crate) fn derive_parser(input: &DeriveInput) -> Result<TokenStream, syn::Error> {
     let ident = &input.ident;
     let pkg_name = std::env::var("CARGO_PKG_NAME").ok().unwrap_or_default();
@@ -67,7 +67,7 @@ pub(crate) fn derive_parser(input: &DeriveInput) -> Result<TokenStream, syn::Err
         }
     }
 }
-#[rsubstitute::mock(base)]
+#[cfg_attr(test, rsubstitute::mock(base))]
 fn gen_for_struct(
     item: &Item,
     item_name: &Ident,
@@ -85,7 +85,7 @@ fn gen_for_struct(
         },
     )
 }
-#[rsubstitute::mock(base)]
+#[cfg_attr(test, rsubstitute::mock(base))]
 fn gen_for_enum(
     item: &Item,
     item_name: &Ident,

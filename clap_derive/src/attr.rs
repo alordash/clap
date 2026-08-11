@@ -1,14 +1,15 @@
-use std::iter::FromIterator;
+use crate::utils::Sp;
 use proc_macro2::TokenStream;
 use quote::ToTokens;
 use quote::quote;
+use std::iter::FromIterator;
 use syn::spanned::Spanned;
 use syn::{
-    Attribute, Expr, Ident, LitStr, Token, parenthesized, parse::{Parse, ParseStream},
+    Attribute, Expr, Ident, LitStr, Token, parenthesized,
+    parse::{Parse, ParseStream},
     punctuated::Punctuated,
 };
-use crate::utils::Sp;
-#[rsubstitute::mock]
+#[cfg_attr(test, rsubstitute::mock)]
 #[derive(Clone)]
 pub(crate) struct ClapAttr {
     pub(crate) kind: Sp<AttrKind>,
@@ -16,7 +17,7 @@ pub(crate) struct ClapAttr {
     pub(crate) magic: Option<MagicAttrName>,
     pub(crate) value: Option<AttrValue>,
 }
-#[rsubstitute::mock(base)]
+#[cfg_attr(test, rsubstitute::mock(base))]
 impl ClapAttr {
     pub(crate) fn parse_all(all_attrs: &[Attribute]) -> Result<Vec<Self>, syn::Error> {
         let mut parsed = Vec::new();
@@ -36,49 +37,53 @@ impl ClapAttr {
             } else {
                 continue;
             };
-            for mut attr in attr
-                .parse_args_with(Punctuated::<ClapAttr, Token![,]>::parse_terminated)?
+            for mut attr in
+                attr.parse_args_with(Punctuated::<ClapAttr, Token![,]>::parse_terminated)?
             {
-                attr.kind = kind;
+                attr.kind = kind.clone();
                 parsed.push(attr);
             }
         }
         Ok(parsed)
     }
+}
+impl ClapAttr {
     pub(crate) fn value_or_abort(&self) -> Result<&AttrValue, syn::Error> {
         self.value
             .as_ref()
-            .ok_or_else(|| {
-                format_err!(self.name, "attribute `{}` requires a value", self.name)
-            })
+            .ok_or_else(|| format_err!(self.name, "attribute `{}` requires a value", self.name))
     }
     pub(crate) fn lit_str_or_abort(&self) -> Result<&LitStr, syn::Error> {
         let value = self.value_or_abort()?;
         match value {
-            AttrValue::Expr(Expr::Lit(expr)) => {
-                match &expr.lit {
-                    syn::Lit::Str(lit) => Ok(lit),
-                    _ => {
-                        abort!(
-                            expr, "attribute `{}` can only accept string literals", self
-                            .name
-                        )
-                    }
+            AttrValue::Expr(Expr::Lit(expr)) => match &expr.lit {
+                syn::Lit::Str(lit) => Ok(lit),
+                _ => {
+                    abort!(
+                        expr,
+                        "attribute `{}` can only accept string literals",
+                        self.name
+                    )
                 }
-            }
+            },
             AttrValue::Expr(expr) => {
-                abort!(expr, "attribute `{}` can only accept string literals", self.name)
+                abort!(
+                    expr,
+                    "attribute `{}` can only accept string literals",
+                    self.name
+                )
             }
             AttrValue::Call(_) => {
                 abort!(
-                    self.name, "attribute `{}` can only accept string literals", self
-                    .name
+                    self.name,
+                    "attribute `{}` can only accept string literals",
+                    self.name
                 )
             }
         }
     }
 }
-#[rsubstitute::mock(base)]
+#[cfg_attr(test, rsubstitute::mock(base))]
 impl Parse for ClapAttr {
     fn parse(input: ParseStream<'_>) -> syn::Result<Self> {
         let name: Ident = input.parse()?;
@@ -125,8 +130,7 @@ impl Parse for ClapAttr {
         } else if input.peek(syn::token::Paren) {
             let nested;
             parenthesized!(nested in input);
-            let method_args: Punctuated<_, _> = nested
-                .parse_terminated(Expr::parse, Token![,])?;
+            let method_args: Punctuated<_, _> = nested.parse_terminated(Expr::parse, Token![,])?;
             Some(AttrValue::Call(Vec::from_iter(method_args)))
         } else {
             None

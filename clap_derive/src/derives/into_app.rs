@@ -2,7 +2,7 @@ use proc_macro2::{Span, TokenStream};
 use quote::quote;
 use syn::{Generics, Ident};
 use crate::item::Item;
-#[rsubstitute::mock(base)]
+#[cfg_attr(test, rsubstitute::mock(base))]
 pub(crate) fn gen_for_struct(
     item: &Item,
     item_name: &Ident,
@@ -25,7 +25,7 @@ pub(crate) fn gen_for_struct(
     };
     Ok(tokens)
 }
-#[rsubstitute::mock(base)]
+#[cfg_attr(test, rsubstitute::mock(base))]
 pub(crate) fn gen_for_enum(
     item: &Item,
     item_name: &Ident,

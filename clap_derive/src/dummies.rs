@@ -1,13 +1,13 @@
 //! Dummy implementations that we emit along with an error.
 use proc_macro2::Ident;
 use quote::quote;
-#[rsubstitute::mock(base)]
+#[cfg_attr(test, rsubstitute::mock(base))]
 #[must_use]
 pub(crate) fn parser(name: &Ident) -> proc_macro2::TokenStream {
     let into_app = into_app(name);
     quote!(#[automatically_derived] impl clap::Parser for # name {} # into_app)
 }
-#[rsubstitute::mock(base)]
+#[cfg_attr(test, rsubstitute::mock(base))]
 #[must_use]
 pub(crate) fn into_app(name: &Ident) -> proc_macro2::TokenStream {
     quote! {
@@ -16,7 +16,7 @@ pub(crate) fn into_app(name: &Ident) -> proc_macro2::TokenStream {
         clap::Command { unimplemented!() } }
     }
 }
-#[rsubstitute::mock(base)]
+#[cfg_attr(test, rsubstitute::mock(base))]
 #[must_use]
 pub(crate) fn from_arg_matches(name: &Ident) -> proc_macro2::TokenStream {
     quote! {
@@ -27,7 +27,7 @@ pub(crate) fn from_arg_matches(name: &Ident) -> proc_macro2::TokenStream {
         unimplemented!() } }
     }
 }
-#[rsubstitute::mock(base)]
+#[cfg_attr(test, rsubstitute::mock(base))]
 #[must_use]
 pub(crate) fn subcommand(name: &Ident) -> proc_macro2::TokenStream {
     let from_arg_matches = from_arg_matches(name);
@@ -39,7 +39,7 @@ pub(crate) fn subcommand(name: &Ident) -> proc_macro2::TokenStream {
         # from_arg_matches
     }
 }
-#[rsubstitute::mock(base)]
+#[cfg_attr(test, rsubstitute::mock(base))]
 #[must_use]
 pub(crate) fn args(name: &Ident) -> proc_macro2::TokenStream {
     let from_arg_matches = from_arg_matches(name);
@@ -50,7 +50,7 @@ pub(crate) fn args(name: &Ident) -> proc_macro2::TokenStream {
         } } # from_arg_matches
     }
 }
-#[rsubstitute::mock(base)]
+#[cfg_attr(test, rsubstitute::mock(base))]
 #[must_use]
 pub(crate) fn value_enum(name: &Ident) -> proc_macro2::TokenStream {
     quote! {

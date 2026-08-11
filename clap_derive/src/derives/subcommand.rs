@@ -5,7 +5,7 @@ use crate::derives::args;
 use crate::derives::args::collect_args_fields;
 use crate::item::{Item, Kind, Name};
 use crate::utils::{is_simple_ty, subty_if_name};
-#[rsubstitute::mock(base)]
+#[cfg_attr(test, rsubstitute::mock(base))]
 pub(crate) fn derive_subcommand(input: &DeriveInput) -> Result<TokenStream, syn::Error> {
     let ident = &input.ident;
     match input.data {
@@ -29,7 +29,7 @@ pub(crate) fn derive_subcommand(input: &DeriveInput) -> Result<TokenStream, syn:
         _ => abort_call_site!("`#[derive(Subcommand)]` only supports enums"),
     }
 }
-#[rsubstitute::mock(base)]
+#[cfg_attr(test, rsubstitute::mock(base))]
 pub(crate) fn gen_for_enum(
     item: &Item,
     item_name: &Ident,
@@ -76,7 +76,7 @@ pub(crate) fn gen_for_enum(
         },
     )
 }
-#[rsubstitute::mock(base)]
+#[cfg_attr(test, rsubstitute::mock(base))]
 fn gen_augment(
     variants: &[(&Variant, Item)],
     parent_item: &Item,
@@ -290,7 +290,7 @@ fn gen_augment(
         },
     )
 }
-#[rsubstitute::mock(base)]
+#[cfg_attr(test, rsubstitute::mock(base))]
 fn gen_has_subcommand(variants: &[(&Variant, Item)]) -> Result<TokenStream, syn::Error> {
     use syn::Fields::Unnamed;
     let mut ext_subcmd = false;
@@ -354,7 +354,7 @@ fn gen_has_subcommand(variants: &[(&Variant, Item)]) -> Result<TokenStream, syn:
     };
     Ok(genned)
 }
-#[rsubstitute::mock(base)]
+#[cfg_attr(test, rsubstitute::mock(base))]
 fn gen_from_arg_matches(
     variants: &[(&Variant, Item)],
 ) -> Result<TokenStream, syn::Error> {
@@ -506,7 +506,7 @@ fn gen_from_arg_matches(
         },
     )
 }
-#[rsubstitute::mock(base)]
+#[cfg_attr(test, rsubstitute::mock(base))]
 fn gen_update_from_arg_matches(
     variants: &[(&Variant, Item)],
 ) -> Result<TokenStream, syn::Error> {

@@ -4,7 +4,7 @@
 //! non-empty adjacent lines, delimited by sequences of blank (whitespace only) lines.
 #[cfg(feature = "unstable-markdown")]
 use markdown::parse_markdown;
-#[rsubstitute::mock(base)]
+#[cfg_attr(test, rsubstitute::mock(base))]
 pub(crate) fn extract_doc_comment(attrs: &[syn::Attribute]) -> Vec<String> {
     let mut lines: Vec<_> = attrs
         .iter()
@@ -39,7 +39,7 @@ pub(crate) fn extract_doc_comment(attrs: &[syn::Attribute]) -> Vec<String> {
     }
     lines
 }
-#[rsubstitute::mock(base)]
+#[cfg_attr(test, rsubstitute::mock(base))]
 pub(crate) fn format_doc_comment(
     lines: &[String],
     preprocess: bool,
@@ -59,7 +59,7 @@ pub(crate) fn format_doc_comment(
         (Some(short), long)
     }
 }
-#[rsubstitute::mock(base)]
+#[cfg_attr(test, rsubstitute::mock(base))]
 #[cfg(not(feature = "unstable-markdown"))]
 fn split_paragraphs(lines: &[String]) -> Vec<String> {
     use std::iter;
@@ -74,23 +74,22 @@ fn split_paragraphs(lines: &[String]) -> Vec<String> {
         })
         .collect()
 }
-#[rsubstitute::mock(base)]
+#[cfg_attr(test, rsubstitute::mock(base))]
 fn remove_period(mut s: String) -> String {
     if s.ends_with('.') && !s.ends_with("..") {
         s.pop();
     }
     s
 }
-#[rsubstitute::mock(base)]
+#[cfg_attr(test, rsubstitute::mock(base))]
 fn is_blank(s: &str) -> bool {
     s.trim().is_empty()
 }
-#[rsubstitute::mock(base)]
 #[cfg(not(feature = "unstable-markdown"))]
 fn merge_lines(lines: impl IntoIterator<Item = impl AsRef<str>>) -> String {
     lines.into_iter().map(|s| s.as_ref().trim().to_owned()).collect::<Vec<_>>().join(" ")
 }
-#[rsubstitute::mock(base)]
+#[cfg_attr(test, rsubstitute::mock(base))]
 #[cfg(not(feature = "unstable-markdown"))]
 fn parse_markdown(lines: &[String]) -> (String, Option<String>) {
     if lines.iter().any(|s| is_blank(s)) {
@@ -110,7 +109,7 @@ mod markdown {
     use std::fmt;
     use std::fmt::Write;
     use std::ops::AddAssign;
-    #[rsubstitute::mock]
+    #[cfg_attr(test, rsubstitute::mock)]
     #[derive(Default)]
     struct MarkdownWriter {
         output: String,
@@ -122,7 +121,7 @@ mod markdown {
         dirty_line: bool,
         styles: Vec<Style>,
     }
-    #[rsubstitute::mock(base)]
+    #[cfg_attr(test, rsubstitute::mock(base))]
     impl MarkdownWriter {
         fn newline(&mut self) {
             self.reset();
@@ -187,7 +186,7 @@ mod markdown {
             self.prefix += quote_prefix;
         }
     }
-    #[rsubstitute::mock(base)]
+    #[cfg_attr(test, rsubstitute::mock(base))]
     pub(super) fn parse_markdown(input: &[String]) -> (String, Option<String>) {
         let parsing_options = Options::ENABLE_STRIKETHROUGH;
         let style_heading = Style::new().bold().underline();

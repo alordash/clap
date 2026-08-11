@@ -3,7 +3,7 @@ use quote::quote;
 use quote::quote_spanned;
 use syn::{Data, DeriveInput, Fields, Ident, Variant, spanned::Spanned};
 use crate::item::{Item, Kind, Name};
-#[rsubstitute::mock(base)]
+#[cfg_attr(test, rsubstitute::mock(base))]
 pub(crate) fn derive_value_enum(input: &DeriveInput) -> Result<TokenStream, syn::Error> {
     let ident = &input.ident;
     match input.data {
@@ -24,7 +24,7 @@ pub(crate) fn derive_value_enum(input: &DeriveInput) -> Result<TokenStream, syn:
         _ => abort_call_site!("`#[derive(ValueEnum)]` only supports enums"),
     }
 }
-#[rsubstitute::mock(base)]
+#[cfg_attr(test, rsubstitute::mock(base))]
 pub(crate) fn gen_for_enum(
     item: &Item,
     item_name: &Ident,
@@ -50,7 +50,7 @@ pub(crate) fn gen_for_enum(
         },
     )
 }
-#[rsubstitute::mock(base)]
+#[cfg_attr(test, rsubstitute::mock(base))]
 fn lits(variants: &[(&Variant, Item)]) -> Result<Vec<(TokenStream, Ident)>, syn::Error> {
     let mut genned = Vec::new();
     for (variant, item) in variants {
@@ -77,14 +77,14 @@ fn lits(variants: &[(&Variant, Item)]) -> Result<Vec<(TokenStream, Ident)>, syn:
     }
     Ok(genned)
 }
-#[rsubstitute::mock(base)]
+#[cfg_attr(test, rsubstitute::mock(base))]
 fn gen_value_variants(lits: &[(TokenStream, Ident)]) -> TokenStream {
     let lit = lits.iter().map(|l| &l.1).collect::<Vec<_>>();
     quote! {
         fn value_variants <'a > () -> &'a[Self] { & [# (Self::# lit),*] }
     }
 }
-#[rsubstitute::mock(base)]
+#[cfg_attr(test, rsubstitute::mock(base))]
 fn gen_to_possible_value(item: &Item, lits: &[(TokenStream, Ident)]) -> TokenStream {
     let (lit, variant): (Vec<TokenStream>, Vec<Ident>) = lits.iter().cloned().unzip();
     let deprecations = item.deprecations();

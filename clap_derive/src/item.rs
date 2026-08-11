@@ -1,22 +1,16 @@
-use std::env;
-use heck::{
-    ToKebabCase, ToLowerCamelCase, ToShoutySnakeCase, ToSnakeCase, ToUpperCamelCase,
-};
+use crate::attr::{AttrKind, AttrValue, ClapAttr, MagicAttrName};
+use crate::utils::{Sp, Ty, extract_doc_comment, format_doc_comment, inner_type, is_simple_ty};
+use heck::{ToKebabCase, ToLowerCamelCase, ToShoutySnakeCase, ToSnakeCase, ToUpperCamelCase};
 use proc_macro2::{self, Span, TokenStream};
 use quote::{ToTokens, format_ident, quote, quote_spanned};
+use std::env;
 use syn::DeriveInput;
-use syn::{
-    self, Attribute, Field, Ident, LitStr, Type, Variant, ext::IdentExt, spanned::Spanned,
-};
-use crate::attr::{AttrKind, AttrValue, ClapAttr, MagicAttrName};
-use crate::utils::{
-    Sp, Ty, extract_doc_comment, format_doc_comment, inner_type, is_simple_ty,
-};
+use syn::{self, Attribute, Field, Ident, LitStr, Type, Variant, ext::IdentExt, spanned::Spanned};
 /// Default casing style for generated arguments.
 pub(crate) const DEFAULT_CASING: CasingStyle = CasingStyle::Kebab;
 /// Default casing style for environment variables
 pub(crate) const DEFAULT_ENV_CASING: CasingStyle = CasingStyle::ScreamingSnake;
-#[rsubstitute::mock]
+#[cfg_attr(test, rsubstitute::mock)]
 #[derive(Clone)]
 pub(crate) struct Item {
     name: Name,
@@ -39,12 +33,9 @@ pub(crate) struct Item {
     group_methods: Vec<Method>,
     kind: Sp<Kind>,
 }
-#[rsubstitute::mock(base)]
+#[cfg_attr(test, rsubstitute::mock(base))]
 impl Item {
-    pub(crate) fn from_args_struct(
-        input: &DeriveInput,
-        name: Name,
-    ) -> Result<Self, syn::Error> {
+    pub(crate) fn from_args_struct(input: &DeriveInput, name: Name) -> Result<Self, syn::Error> {
         let ident = input.ident.clone();
         let span = input.ident.span();
         let attrs = &input.attrs;
@@ -75,10 +66,7 @@ impl Item {
         res.push_doc_comment(attrs, "about", Some("long_about"));
         Ok(res)
     }
-    pub(crate) fn from_value_enum(
-        input: &DeriveInput,
-        name: Name,
-    ) -> Result<Self, syn::Error> {
+    pub(crate) fn from_value_enum(input: &DeriveInput, name: Name) -> Result<Self, syn::Error> {
         let ident = input.ident.clone();
         let span = input.ident.span();
         let attrs = &input.attrs;
@@ -91,8 +79,9 @@ impl Item {
         res.push_attrs(&parsed_attrs)?;
         if res.has_explicit_methods() {
             abort!(
-                res.methods[0].name.span(), "{} doesn't exist for `ValueEnum` enums", res
-                .methods[0].name
+                res.methods[0].name.span(),
+                "{} doesn't exist for `ValueEnum` enums",
+                res.methods[0].name
             );
         }
         Ok(res)
@@ -106,9 +95,9 @@ impl Item {
         let ident = variant.ident.clone();
         let span = variant.span();
         let ty = match variant.fields {
-            syn::Fields::Unnamed(
-                syn::FieldsUnnamed { ref unnamed, .. },
-            ) if unnamed.len() == 1 => Ty::from_syn_ty(&unnamed[0].ty),
+            syn::Fields::Unnamed(syn::FieldsUnnamed { ref unnamed, .. }) if unnamed.len() == 1 => {
+                Ty::from_syn_ty(&unnamed[0].ty)
+            }
             syn::Fields::Named(_) | syn::Fields::Unnamed(..) | syn::Fields::Unit => {
                 Sp::new(Ty::Other, span)
             }
@@ -125,14 +114,15 @@ impl Item {
         let parsed_attrs = ClapAttr::parse_all(&variant.attrs)?;
         res.infer_kind(&parsed_attrs)?;
         res.push_attrs(&parsed_attrs)?;
-        if matches!(&* res.kind, Kind::Command(_) | Kind::Subcommand(_)) {
+        if matches!(&*res.kind, Kind::Command(_) | Kind::Subcommand(_)) {
             res.push_doc_comment(&variant.attrs, "about", Some("long_about"));
         }
         match &*res.kind {
             Kind::Flatten(_) => {
                 if res.has_explicit_methods() {
                     abort!(
-                        res.kind.span(), "methods are not allowed for flattened entry"
+                        res.kind.span(),
+                        "methods are not allowed for flattened entry"
                     );
                 }
             }
@@ -165,7 +155,7 @@ impl Item {
         let parsed_attrs = ClapAttr::parse_all(&variant.attrs)?;
         res.infer_kind(&parsed_attrs)?;
         res.push_attrs(&parsed_attrs)?;
-        if matches!(&* res.kind, Kind::Value) {
+        if matches!(&*res.kind, Kind::Value) {
             res.push_doc_comment(&variant.attrs, "help", None);
         }
         Ok(res)
@@ -191,14 +181,15 @@ impl Item {
         let parsed_attrs = ClapAttr::parse_all(&field.attrs)?;
         res.infer_kind(&parsed_attrs)?;
         res.push_attrs(&parsed_attrs)?;
-        if matches!(&* res.kind, Kind::Arg(_)) {
+        if matches!(&*res.kind, Kind::Arg(_)) {
             res.push_doc_comment(&field.attrs, "help", Some("long_help"));
         }
         match &*res.kind {
             Kind::Flatten(_) => {
                 if res.has_explicit_methods() {
                     abort!(
-                        res.kind.span(), "methods are not allowed for flattened entry"
+                        res.kind.span(),
+                        "methods are not allowed for flattened entry"
                     );
                 }
             }
@@ -250,23 +241,30 @@ impl Item {
             kind,
         }
     }
+}
+#[cfg_attr(test, rsubstitute::mock)]
+impl Item {
     fn push_method(&mut self, kind: AttrKind, name: Ident, arg: impl ToTokens) {
         self.push_method_(kind, name, arg.to_token_stream());
     }
+}
+#[cfg_attr(test, rsubstitute::mock(base))]
+impl Item {
     fn push_method_(&mut self, kind: AttrKind, name: Ident, arg: TokenStream) {
         if name == "id" {
             match kind {
                 AttrKind::Command | AttrKind::Value => {
-                    self.deprecations
-                        .push(Deprecation {
-                            span: name.span(),
-                            id: "id_is_only_for_arg",
-                            version: "4.0.0",
-                            description: format!(
-                                "`#[{}(id)] was allowed by mistake, instead use `#[{}(name)]`",
-                                kind.as_str(), kind.as_str()
-                            ),
-                        });
+                    self.deprecations.push(Deprecation {
+                        span: name.span(),
+                        id: "id_is_only_for_arg",
+                        version: "4.0.0",
+                        description: format!(
+                            "`#[{}(id)] was allowed by mistake, instead use `#[{}(name)]`",
+                            kind.as_str(),
+                            kind.as_str()
+                        ),
+                        __rs_data: Default::default(),
+                    });
                     self.name = Name::Assigned(arg);
                 }
                 AttrKind::Group => {
@@ -288,14 +286,12 @@ impl Item {
                                 "`#[{}(name)] was allowed by mistake, instead use `#[{}(id)]` or `#[{}(value_name)]`",
                                 kind.as_str(), kind.as_str(), kind.as_str()
                             ),
+                            __rs_data: Default::default()
                         });
                     self.name = Name::Assigned(arg);
                 }
                 AttrKind::Group => self.group_methods.push(Method::new(name, arg)),
-                AttrKind::Command
-                | AttrKind::Value
-                | AttrKind::Clap
-                | AttrKind::StructOpt => {
+                AttrKind::Command | AttrKind::Value | AttrKind::Clap | AttrKind::StructOpt => {
                     self.name = Name::Assigned(arg);
                 }
             }
@@ -323,9 +319,7 @@ impl Item {
                 Some(MagicAttrName::FromGlobal) => {
                     if attr.value.is_some() {
                         let expr = attr.value_or_abort()?;
-                        abort!(
-                            expr, "attribute `{}` does not accept a value", attr.name
-                        );
+                        abort!(expr, "attribute `{}` does not accept a value", attr.name);
                     }
                     let ty = self
                         .kind()
@@ -338,9 +332,7 @@ impl Item {
                 Some(MagicAttrName::Subcommand) if attr.value.is_none() => {
                     if attr.value.is_some() {
                         let expr = attr.value_or_abort()?;
-                        abort!(
-                            expr, "attribute `{}` does not accept a value", attr.name
-                        );
+                        abort!(expr, "attribute `{}` does not accept a value", attr.name);
                     }
                     let ty = self
                         .kind()
@@ -353,9 +345,7 @@ impl Item {
                 Some(MagicAttrName::ExternalSubcommand) if attr.value.is_none() => {
                     if attr.value.is_some() {
                         let expr = attr.value_or_abort()?;
-                        abort!(
-                            expr, "attribute `{}` does not accept a value", attr.name
-                        );
+                        abort!(expr, "attribute `{}` does not accept a value", attr.name);
                     }
                     let kind = Sp::new(Kind::ExternalSubcommand, attr.name.span());
                     Some(kind)
@@ -363,9 +353,7 @@ impl Item {
                 Some(MagicAttrName::Flatten) if attr.value.is_none() => {
                     if attr.value.is_some() {
                         let expr = attr.value_or_abort()?;
-                        abort!(
-                            expr, "attribute `{}` does not accept a value", attr.name
-                        );
+                        abort!(expr, "attribute `{}` does not accept a value", attr.name);
                     }
                     let ty = self
                         .kind()
@@ -377,10 +365,7 @@ impl Item {
                 }
                 Some(MagicAttrName::Skip) if actual_attr_kind != AttrKind::Group => {
                     let expr = attr.value.clone();
-                    let kind = Sp::new(
-                        Kind::Skip(expr, self.kind.attr_kind()),
-                        attr.name.span(),
-                    );
+                    let kind = Sp::new(Kind::Skip(expr, self.kind.attr_kind()), attr.name.span());
                     Some(kind)
                 }
                 _ => None,
@@ -391,37 +376,34 @@ impl Item {
         }
         Ok(())
     }
+}
+impl Item {
     fn push_attrs(&mut self, attrs: &[ClapAttr]) -> Result<(), syn::Error> {
         for attr in attrs {
             let actual_attr_kind = *attr.kind.get();
             let expected_attr_kind = self.kind.attr_kind();
             match (actual_attr_kind, expected_attr_kind) {
                 (AttrKind::Clap, _) | (AttrKind::StructOpt, _) => {
-                    self.deprecations
-                        .push(
-                            Deprecation::attribute(
-                                "4.0.0",
-                                actual_attr_kind,
-                                expected_attr_kind,
-                                attr.kind.span(),
-                            ),
-                        );
+                    self.deprecations.push(Deprecation::attribute(
+                        "4.0.0",
+                        actual_attr_kind,
+                        expected_attr_kind,
+                        attr.kind.span(),
+                    ));
                 }
                 (AttrKind::Group, AttrKind::Command) => {}
                 _ if attr.kind != expected_attr_kind => {
                     abort!(
-                        attr.kind.span(), "expected `{}` attribute instead of `{}`",
-                        expected_attr_kind.as_str(), actual_attr_kind.as_str()
+                        attr.kind.span(),
+                        "expected `{}` attribute instead of `{}`",
+                        expected_attr_kind.as_str(),
+                        actual_attr_kind.as_str()
                     );
                 }
                 _ => {}
             }
             if let Some(AttrValue::Call(tokens)) = &attr.value {
-                self.push_method(
-                    *attr.kind.get(),
-                    attr.name.clone(),
-                    quote!(# (# tokens),*),
-                );
+                self.push_method(*attr.kind.get(), attr.name.clone(), quote!(# (# tokens),*));
                 continue;
             }
             match &attr.magic {
@@ -443,26 +425,27 @@ impl Item {
                 }
                 Some(MagicAttrName::ValueParser) if attr.value.is_none() => {
                     assert_attr_kind(attr, &[AttrKind::Arg])?;
-                    self.deprecations
-                        .push(Deprecation {
-                            span: attr.name.span(),
-                            id: "bare_value_parser",
-                            version: "4.0.0",
-                            description: "`#[arg(value_parser)]` is now the default and is no longer needed`"
+                    self.deprecations.push(Deprecation {
+                        span: attr.name.span(),
+                        id: "bare_value_parser",
+                        version: "4.0.0",
+                        description:
+                            "`#[arg(value_parser)]` is now the default and is no longer needed`"
                                 .to_owned(),
-                        });
+                        __rs_data: Default::default(),
+                    });
                     self.value_parser = Some(ValueParser::Implicit(attr.name.clone()));
                 }
                 Some(MagicAttrName::Action) if attr.value.is_none() => {
                     assert_attr_kind(attr, &[AttrKind::Arg])?;
-                    self.deprecations
-                        .push(Deprecation {
-                            span: attr.name.span(),
-                            id: "bare_action",
-                            version: "4.0.0",
-                            description: "`#[arg(action)]` is now the default and is no longer needed`"
-                                .to_owned(),
-                        });
+                    self.deprecations.push(Deprecation {
+                        span: attr.name.span(),
+                        id: "bare_action",
+                        version: "4.0.0",
+                        description: "`#[arg(action)]` is now the default and is no longer needed`"
+                            .to_owned(),
+                        __rs_data: Default::default(),
+                    });
                     self.action = Some(Action::Implicit(attr.name.clone()));
                 }
                 Some(MagicAttrName::Env) if attr.value.is_none() => {
@@ -482,10 +465,9 @@ impl Item {
                 }
                 Some(MagicAttrName::About) if attr.value.is_none() => {
                     assert_attr_kind(attr, &[AttrKind::Command])?;
-                    if let Some(method) = Method::from_env(
-                        attr.name.clone(),
-                        "CARGO_PKG_DESCRIPTION",
-                    )? {
+                    if let Some(method) =
+                        Method::from_env(attr.name.clone(), "CARGO_PKG_DESCRIPTION")?
+                    {
                         self.methods.push(method);
                     }
                 }
@@ -499,19 +481,15 @@ impl Item {
                 }
                 Some(MagicAttrName::Author) if attr.value.is_none() => {
                     assert_attr_kind(attr, &[AttrKind::Command])?;
-                    if let Some(method) = Method::from_env(
-                        attr.name.clone(),
-                        "CARGO_PKG_AUTHORS",
-                    )? {
+                    if let Some(method) = Method::from_env(attr.name.clone(), "CARGO_PKG_AUTHORS")?
+                    {
                         self.methods.push(method);
                     }
                 }
                 Some(MagicAttrName::Version) if attr.value.is_none() => {
                     assert_attr_kind(attr, &[AttrKind::Command])?;
-                    if let Some(method) = Method::from_env(
-                        attr.name.clone(),
-                        "CARGO_PKG_VERSION",
-                    )? {
+                    if let Some(method) = Method::from_env(attr.name.clone(), "CARGO_PKG_VERSION")?
+                    {
                         self.methods.push(method);
                     }
                 }
@@ -524,8 +502,7 @@ impl Item {
                             attr.name.clone(),
                             "#[arg(default_value_t)] (without an argument) can be used \
                             only on field level\n\n= note: {note}\n\n",
-                            note =
-                            "see \
+                            note = "see \
                                 https://docs.rs/clap/latest/clap/_derive/index.html#arg-attributes"
                         )
                     };
@@ -568,8 +545,7 @@ impl Item {
                             attr.name.clone(),
                             "#[arg(default_values_t)] (without an argument) can be used \
                             only on field level\n\n= note: {note}\n\n",
-                            note =
-                            "see \
+                            note = "see \
                                 https://docs.rs/clap/latest/clap/_derive/index.html#arg-attributes"
                         )
                     };
@@ -579,8 +555,7 @@ impl Item {
                         abort!(
                             attr.name.clone(),
                             "#[arg(default_values_t)] can be used only on Vec types\n\n= note: {note}\n\n",
-                            note =
-                            "see \
+                            note = "see \
                                 https://docs.rs/clap/latest/clap/_derive/index.html#arg-attributes"
                         )
                     }
@@ -619,13 +594,10 @@ impl Item {
                             .collect() }).iter().copied() } }
                         )
                     };
-                    self.methods
-                        .push(
-                            Method::new(
-                                Ident::new("default_values", attr.name.span()),
-                                val,
-                            ),
-                        );
+                    self.methods.push(Method::new(
+                        Ident::new("default_values", attr.name.span()),
+                        val,
+                    ));
                 }
                 Some(MagicAttrName::DefaultValueOsT) => {
                     assert_attr_kind(attr, &[AttrKind::Arg])?;
@@ -636,8 +608,7 @@ impl Item {
                             attr.name.clone(),
                             "#[arg(default_value_os_t)] (without an argument) can be used \
                             only on field level\n\n= note: {note}\n\n",
-                            note =
-                            "see \
+                            note = "see \
                                 https://docs.rs/clap/latest/clap/_derive/index.html#arg-attributes"
                         )
                     };
@@ -680,8 +651,7 @@ impl Item {
                             attr.name.clone(),
                             "#[arg(default_values_os_t)] (without an argument) can be used \
                             only on field level\n\n= note: {note}\n\n",
-                            note =
-                            "see \
+                            note = "see \
                                 https://docs.rs/clap/latest/clap/_derive/index.html#arg-attributes"
                         )
                     };
@@ -691,8 +661,7 @@ impl Item {
                         abort!(
                             attr.name.clone(),
                             "#[arg(default_values_os_t)] can be used only on Vec types\n\n= note: {note}\n\n",
-                            note =
-                            "see \
+                            note = "see \
                                 https://docs.rs/clap/latest/clap/_derive/index.html#arg-attributes"
                         )
                     }
@@ -732,27 +701,20 @@ impl Item {
                             .copied() } }
                         )
                     };
-                    self.methods
-                        .push(
-                            Method::new(
-                                Ident::new("default_values", attr.name.span()),
-                                val,
-                            ),
-                        );
+                    self.methods.push(Method::new(
+                        Ident::new("default_values", attr.name.span()),
+                        val,
+                    ));
                 }
                 Some(MagicAttrName::NextDisplayOrder) => {
                     assert_attr_kind(attr, &[AttrKind::Command])?;
                     let expr = attr.value_or_abort()?;
-                    self.next_display_order = Some(
-                        Method::new(attr.name.clone(), quote!(# expr)),
-                    );
+                    self.next_display_order = Some(Method::new(attr.name.clone(), quote!(# expr)));
                 }
                 Some(MagicAttrName::NextHelpHeading) => {
                     assert_attr_kind(attr, &[AttrKind::Command])?;
                     let expr = attr.value_or_abort()?;
-                    self.next_help_heading = Some(
-                        Method::new(attr.name.clone(), quote!(# expr)),
-                    );
+                    self.next_help_heading = Some(Method::new(attr.name.clone(), quote!(# expr)));
                 }
                 Some(MagicAttrName::RenameAll) => {
                     let lit = attr.lit_str_or_abort()?;
@@ -782,8 +744,7 @@ impl Item {
                     let expr = attr.value_or_abort()?;
                     self.push_method(*attr.kind.get(), attr.name.clone(), expr);
                 }
-                Some(MagicAttrName::ValueEnum)
-                | Some(MagicAttrName::VerbatimDocComment) => {
+                Some(MagicAttrName::ValueEnum) | Some(MagicAttrName::VerbatimDocComment) => {
                     let expr = attr.value_or_abort()?;
                     abort!(expr, "attribute `{}` does not accept a value", attr.name);
                 }
@@ -797,33 +758,29 @@ impl Item {
         if self.has_explicit_methods() {
             if let Kind::Skip(_, attr) = &*self.kind {
                 abort!(
-                    self.methods[0].name.span(), "`{}` cannot be used with `#[{}(skip)]",
-                    self.methods[0].name, attr.as_str(),
+                    self.methods[0].name.span(),
+                    "`{}` cannot be used with `#[{}(skip)]",
+                    self.methods[0].name,
+                    attr.as_str(),
                 );
             }
             if let Kind::FromGlobal(_) = &*self.kind {
                 abort!(
                     self.methods[0].name.span(),
-                    "`{}` cannot be used with `#[arg(from_global)]", self.methods[0]
-                    .name,
+                    "`{}` cannot be used with `#[arg(from_global)]",
+                    self.methods[0].name,
                 );
             }
         }
         Ok(())
     }
-    fn push_doc_comment(
-        &mut self,
-        attrs: &[Attribute],
-        short_name: &str,
-        long_name: Option<&str>,
-    ) {
+}
+impl Item {
+    fn push_doc_comment(&mut self, attrs: &[Attribute], short_name: &str, long_name: Option<&str>) {
         let lines = extract_doc_comment(attrs);
         if !lines.is_empty() {
-            let (short_help, long_help) = format_doc_comment(
-                &lines,
-                !self.verbatim_doc_comment,
-                self.force_long_help,
-            );
+            let (short_help, long_help) =
+                format_doc_comment(&lines, !self.verbatim_doc_comment, self.force_long_help);
             let short_name = format_ident!("{short_name}");
             let is_value_kind = matches!(self.kind.get(), Kind::Value);
             let short_method = if is_value_kind && cfg!(feature = "unstable-v5") {
@@ -838,7 +795,9 @@ impl Item {
             } else {
                 Method::new(
                     short_name,
-                    short_help.map(|h| quote!(# h)).unwrap_or_else(|| quote!(None)),
+                    short_help
+                        .map(|h| quote!(# h))
+                        .unwrap_or_else(|| quote!(None)),
                 )
             };
             self.doc_comment.push(short_method);
@@ -846,7 +805,9 @@ impl Item {
                 let long_name = format_ident!("{long_name}");
                 let long = Method::new(
                     long_name,
-                    long_help.map(|h| quote!(# h)).unwrap_or_else(|| quote!(None)),
+                    long_help
+                        .map(|h| quote!(# h))
+                        .unwrap_or_else(|| quote!(None)),
                 );
                 self.doc_comment.push(long);
             }
@@ -970,13 +931,15 @@ impl Item {
         self.is_positional
     }
     pub(crate) fn casing(&self) -> Sp<CasingStyle> {
-        self.casing
+        self.casing.clone()
     }
     pub(crate) fn env_casing(&self) -> Sp<CasingStyle> {
-        self.env_casing
+        self.env_casing.clone()
     }
     pub(crate) fn has_explicit_methods(&self) -> bool {
-        self.methods.iter().any(|m| m.name != "help" && m.name != "long_help")
+        self.methods
+            .iter()
+            .any(|m| m.name != "help" && m.name != "long_help")
     }
     pub(crate) fn skip_group(&self) -> bool {
         self.skip_group
@@ -1001,7 +964,7 @@ impl ValueParser {
         }
     }
 }
-#[rsubstitute::mock(base)]
+#[cfg_attr(test, rsubstitute::mock(base))]
 fn default_value_parser(inner_type: &Type, span: Span) -> Method {
     let func = Ident::new("value_parser", span);
     Method::new(
@@ -1030,7 +993,7 @@ impl Action {
         }
     }
 }
-#[rsubstitute::mock(base)]
+#[cfg_attr(test, rsubstitute::mock(base))]
 fn default_action(field_type: &Type, span: Span) -> Method {
     let ty = Ty::from_syn_ty(field_type);
     let args = match *ty {
@@ -1107,13 +1070,13 @@ impl Kind {
         }
     }
 }
-#[rsubstitute::mock]
+#[cfg_attr(test, rsubstitute::mock)]
 #[derive(Clone)]
 pub(crate) struct Method {
     name: Ident,
     args: TokenStream,
 }
-#[rsubstitute::mock(base)]
+#[cfg_attr(test, rsubstitute::mock(base))]
 impl Method {
     pub(crate) fn new(name: Ident, args: TokenStream) -> Self {
         Method { name, args }
@@ -1130,9 +1093,9 @@ impl Method {
                 abort!(
                     ident,
                     "cannot derive `{}` from Cargo.toml\n\n= note: {note}\n\n= help: {help}\n\n",
-                    ident, note =
-                    format_args!("`{env_var}` environment variable is not set"), help =
-                    format_args!("use `{ident} = \"...\"` to set {ident} manually")
+                    ident,
+                    note = format_args!("`{env_var}` environment variable is not set"),
+                    help = format_args!("use `{ident} = \"...\"` to set {ident} manually")
                 );
             }
         };
@@ -1141,20 +1104,16 @@ impl Method {
             lit = LitStr::new(&edited, lit.span());
         }
         let env_var_lit = LitStr::new(env_var, ident.span());
-        Ok(
-            Some(
-                Method::new(
-                    ident,
-                    quote!({ let _ = ::core::env!(# env_var_lit); # lit }),
-                ),
-            ),
-        )
+        Ok(Some(Method::new(
+            ident,
+            quote!({ let _ = ::core::env!(# env_var_lit); # lit }),
+        )))
     }
     pub(crate) fn args(&self) -> &TokenStream {
         &self.args
     }
 }
-#[rsubstitute::mock(base)]
+#[cfg_attr(test, rsubstitute::mock(base))]
 impl ToTokens for Method {
     fn to_tokens(&self, ts: &mut TokenStream) {
         let Method { name, args } = self;
@@ -1162,7 +1121,7 @@ impl ToTokens for Method {
         tokens.to_tokens(ts);
     }
 }
-#[rsubstitute::mock]
+#[cfg_attr(test, rsubstitute::mock)]
 #[derive(Clone)]
 pub(crate) struct Deprecation {
     pub(crate) span: Span,
@@ -1170,30 +1129,31 @@ pub(crate) struct Deprecation {
     pub(crate) version: &'static str,
     pub(crate) description: String,
 }
-#[rsubstitute::mock(base)]
+#[cfg_attr(test, rsubstitute::mock(base))]
 impl Deprecation {
-    fn attribute(
-        version: &'static str,
-        old: AttrKind,
-        new: AttrKind,
-        span: Span,
-    ) -> Self {
+    fn attribute(version: &'static str, old: AttrKind, new: AttrKind, span: Span) -> Self {
         Self {
             span,
             id: "old_attribute",
             version,
             description: format!(
                 "Attribute `#[{}(...)]` has been deprecated in favor of `#[{}(...)]`",
-                old.as_str(), new.as_str()
+                old.as_str(),
+                new.as_str()
             ),
         }
     }
 }
-#[rsubstitute::mock(base)]
+#[cfg_attr(test, rsubstitute::mock(base))]
 impl ToTokens for Deprecation {
     fn to_tokens(&self, ts: &mut TokenStream) {
         let tokens = if cfg!(feature = "deprecated") {
-            let Deprecation { span, id, version, description } = self;
+            let Deprecation {
+                span,
+                id,
+                version,
+                description,
+            } = self;
             let span = *span;
             let id = Ident::new(id, span);
             quote_spanned!(
@@ -1206,25 +1166,25 @@ impl ToTokens for Deprecation {
         tokens.to_tokens(ts);
     }
 }
-#[rsubstitute::mock(base)]
-fn assert_attr_kind(
-    attr: &ClapAttr,
-    possible_kind: &[AttrKind],
-) -> Result<(), syn::Error> {
-    if *attr.kind.get() == AttrKind::Clap || *attr.kind.get() == AttrKind::StructOpt
-    {} else if !possible_kind.contains(attr.kind.get()) {
+#[cfg_attr(test, rsubstitute::mock(base))]
+fn assert_attr_kind(attr: &ClapAttr, possible_kind: &[AttrKind]) -> Result<(), syn::Error> {
+    if *attr.kind.get() == AttrKind::Clap || *attr.kind.get() == AttrKind::StructOpt {
+    } else if !possible_kind.contains(attr.kind.get()) {
         let options = possible_kind
             .iter()
             .map(|k| format!("`#[{}({})]`", k.as_str(), attr.name))
             .collect::<Vec<_>>();
         abort!(
-            attr.name, "unknown `#[{}({})]` attribute ({} exists)", attr.kind.as_str(),
-            attr.name, options.join(", ")
+            attr.name,
+            "unknown `#[{}({})]` attribute ({} exists)",
+            attr.kind.as_str(),
+            attr.name,
+            options.join(", ")
         );
     }
     Ok(())
 }
-#[rsubstitute::mock(base)]
+#[cfg_attr(test, rsubstitute::mock(base))]
 /// replace all `:` with `, ` when not inside the `<>`
 ///
 /// `"author1:author2:author3" => "author1, author2, author3"`
@@ -1295,9 +1255,7 @@ pub(crate) enum Name {
 }
 impl Name {
     pub(crate) fn translate(self, style: CasingStyle) -> TokenStream {
-        use CasingStyle::{
-            Camel, Kebab, Lower, Pascal, ScreamingSnake, Snake, Upper, Verbatim,
-        };
+        use CasingStyle::{Camel, Kebab, Lower, Pascal, ScreamingSnake, Snake, Upper, Verbatim};
         match self {
             Name::Assigned(tokens) => tokens,
             Name::Derived(ident) => {
@@ -1317,9 +1275,7 @@ impl Name {
         }
     }
     pub(crate) fn translate_char(self, style: CasingStyle) -> TokenStream {
-        use CasingStyle::{
-            Camel, Kebab, Lower, Pascal, ScreamingSnake, Snake, Upper, Verbatim,
-        };
+        use CasingStyle::{Camel, Kebab, Lower, Pascal, ScreamingSnake, Snake, Upper, Verbatim};
         match self {
             Name::Assigned(tokens) => quote!((# tokens).chars().next().unwrap()),
             Name::Derived(ident) => {

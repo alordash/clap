@@ -6,7 +6,7 @@ use syn::{
 };
 use crate::item::{Item, Kind, Name};
 use crate::utils::{Sp, Ty, inner_type, sub_type};
-#[rsubstitute::mock(base)]
+#[cfg_attr(test, rsubstitute::mock(base))]
 pub(crate) fn derive_args(input: &DeriveInput) -> Result<TokenStream, syn::Error> {
     let ident = &input.ident;
     match input.data {
@@ -36,7 +36,7 @@ pub(crate) fn derive_args(input: &DeriveInput) -> Result<TokenStream, syn::Error
         _ => abort_call_site!("`#[derive(Args)]` only supports non-tuple structs"),
     }
 }
-#[rsubstitute::mock(base)]
+#[cfg_attr(test, rsubstitute::mock(base))]
 pub(crate) fn gen_for_struct(
     item: &Item,
     item_name: &Ident,
@@ -94,7 +94,7 @@ pub(crate) fn gen_for_struct(
         },
     )
 }
-#[rsubstitute::mock(base)]
+#[cfg_attr(test, rsubstitute::mock(base))]
 /// Generate a block of code to add arguments/subcommands corresponding to
 /// the `fields` to an cmd.
 pub(crate) fn gen_augment(
@@ -321,7 +321,7 @@ pub(crate) fn gen_augment(
         },
     )
 }
-#[rsubstitute::mock(base)]
+#[cfg_attr(test, rsubstitute::mock(base))]
 pub(crate) fn gen_constructor(
     fields: &[(&Field, Item)],
 ) -> Result<TokenStream, syn::Error> {
@@ -434,7 +434,7 @@ pub(crate) fn gen_constructor(
         },
     )
 }
-#[rsubstitute::mock(base)]
+#[cfg_attr(test, rsubstitute::mock(base))]
 pub(crate) fn gen_updater(
     fields: &[(&Field, Item)],
     use_self: bool,
@@ -526,7 +526,7 @@ pub(crate) fn gen_updater(
         },
     )
 }
-#[rsubstitute::mock(base)]
+#[cfg_attr(test, rsubstitute::mock(base))]
 fn gen_parsers(
     item: &Item,
     ty: &Sp<Ty>,
@@ -615,19 +615,19 @@ fn gen_parsers(
     };
     Ok(genned)
 }
-#[rsubstitute::mock(base)]
+#[cfg_attr(test, rsubstitute::mock(base))]
 #[cfg(feature = "raw-deprecated")]
 pub(crate) fn raw_deprecated() -> TokenStream {
     quote! {}
 }
-#[rsubstitute::mock(base)]
+#[cfg_attr(test, rsubstitute::mock(base))]
 #[cfg(not(feature = "raw-deprecated"))]
 pub(crate) fn raw_deprecated() -> TokenStream {
     quote! {
         #![allow(deprecated)]
     }
 }
-#[rsubstitute::mock(base)]
+#[cfg_attr(test, rsubstitute::mock(base))]
 pub(crate) fn collect_args_fields<'a>(
     item: &'a Item,
     fields: &'a FieldsNamed,
