@@ -2,30 +2,23 @@
 //!
 //! #[derive(Parser)] works in terms of "paragraphs". Paragraph is a sequence of
 //! non-empty adjacent lines, delimited by sequences of blank (whitespace only) lines.
-
 #[cfg(feature = "unstable-markdown")]
 use markdown::parse_markdown;
-
+#[rsubstitute::mock(base)]
 pub(crate) fn extract_doc_comment(attrs: &[syn::Attribute]) -> Vec<String> {
-    // multiline comments (`/** ... */`) may have LFs (`\n`) in them,
-    // we need to split so we could handle the lines correctly
-    //
-    // we also need to remove leading and trailing blank lines
     let mut lines: Vec<_> = attrs
         .iter()
         .filter(|attr| attr.path().is_ident("doc"))
         .filter_map(|attr| {
-            // non #[doc = "..."] attributes are not our concern
-            // we leave them for rustc to handle
             match &attr.meta {
-                syn::Meta::NameValue(syn::MetaNameValue {
-                    value:
-                        syn::Expr::Lit(syn::ExprLit {
-                            lit: syn::Lit::Str(s),
-                            ..
-                        }),
-                    ..
-                }) => Some(s.value()),
+                syn::Meta::NameValue(
+                    syn::MetaNameValue {
+                        value: syn::Expr::Lit(
+                            syn::ExprLit { lit: syn::Lit::Str(s), .. },
+                        ),
+                        ..
+                    },
+                ) => Some(s.value()),
                 _ => None,
             }
         })
@@ -34,7 +27,6 @@ pub(crate) fn extract_doc_comment(attrs: &[syn::Attribute]) -> Vec<String> {
             let lines = s
                 .split('\n')
                 .map(|s| {
-                    // remove one leading space no matter what
                     let s = s.strip_prefix(' ').unwrap_or(s);
                     s.to_owned()
                 })
@@ -42,14 +34,12 @@ pub(crate) fn extract_doc_comment(attrs: &[syn::Attribute]) -> Vec<String> {
             lines
         })
         .collect();
-
     while let Some(true) = lines.last().map(|s| is_blank(s)) {
         lines.pop();
     }
-
     lines
 }
-
+#[rsubstitute::mock(base)]
 pub(crate) fn format_doc_comment(
     lines: &[String],
     preprocess: bool,
@@ -58,67 +48,49 @@ pub(crate) fn format_doc_comment(
     if preprocess {
         let (short, long) = parse_markdown(lines);
         let long = long.or_else(|| force_long.then(|| short.clone()));
-
         (Some(remove_period(short)), long)
     } else if let Some(first_blank) = lines.iter().position(|s| is_blank(s)) {
         let short = lines[..first_blank].join("\n");
         let long = lines.join("\n");
-
         (Some(short), Some(long))
     } else {
         let short = lines.join("\n");
         let long = force_long.then(|| short.clone());
-
         (Some(short), long)
     }
 }
-
+#[rsubstitute::mock(base)]
 #[cfg(not(feature = "unstable-markdown"))]
 fn split_paragraphs(lines: &[String]) -> Vec<String> {
     use std::iter;
-
     let mut last_line = 0;
     iter::from_fn(|| {
-        let slice = &lines[last_line..];
-        let start = slice.iter().position(|s| !is_blank(s)).unwrap_or(0);
-
-        let slice = &slice[start..];
-        let len = slice
-            .iter()
-            .position(|s| is_blank(s))
-            .unwrap_or(slice.len());
-
-        last_line += start + len;
-
-        if len != 0 {
-            Some(merge_lines(&slice[..len]))
-        } else {
-            None
-        }
-    })
-    .collect()
+            let slice = &lines[last_line..];
+            let start = slice.iter().position(|s| !is_blank(s)).unwrap_or(0);
+            let slice = &slice[start..];
+            let len = slice.iter().position(|s| is_blank(s)).unwrap_or(slice.len());
+            last_line += start + len;
+            if len != 0 { Some(merge_lines(&slice[..len])) } else { None }
+        })
+        .collect()
 }
-
+#[rsubstitute::mock(base)]
 fn remove_period(mut s: String) -> String {
     if s.ends_with('.') && !s.ends_with("..") {
         s.pop();
     }
     s
 }
-
+#[rsubstitute::mock(base)]
 fn is_blank(s: &str) -> bool {
     s.trim().is_empty()
 }
-
+#[rsubstitute::mock(base)]
 #[cfg(not(feature = "unstable-markdown"))]
 fn merge_lines(lines: impl IntoIterator<Item = impl AsRef<str>>) -> String {
-    lines
-        .into_iter()
-        .map(|s| s.as_ref().trim().to_owned())
-        .collect::<Vec<_>>()
-        .join(" ")
+    lines.into_iter().map(|s| s.as_ref().trim().to_owned()).collect::<Vec<_>>().join(" ")
 }
-
+#[rsubstitute::mock(base)]
 #[cfg(not(feature = "unstable-markdown"))]
 fn parse_markdown(lines: &[String]) -> (String, Option<String>) {
     if lines.iter().any(|s| is_blank(s)) {
@@ -131,7 +103,6 @@ fn parse_markdown(lines: &[String]) -> (String, Option<String>) {
         (short, None)
     }
 }
-
 #[cfg(feature = "unstable-markdown")]
 mod markdown {
     use anstyle::{Reset, Style};
@@ -139,7 +110,7 @@ mod markdown {
     use std::fmt;
     use std::fmt::Write;
     use std::ops::AddAssign;
-
+    #[rsubstitute::mock]
     #[derive(Default)]
     struct MarkdownWriter {
         output: String,
@@ -151,7 +122,7 @@ mod markdown {
         dirty_line: bool,
         styles: Vec<Style>,
     }
-
+    #[rsubstitute::mock(base)]
     impl MarkdownWriter {
         fn newline(&mut self) {
             self.reset();
@@ -167,7 +138,6 @@ mod markdown {
             self.endline();
             self.hanging_paragraph = true;
         }
-
         fn write_fmt(&mut self, arguments: fmt::Arguments<'_>) {
             if self.hanging_paragraph {
                 self.hanging_paragraph = false;
@@ -180,14 +150,12 @@ mod markdown {
             }
             self.output.write_fmt(arguments).unwrap();
         }
-
         fn start_link(&mut self, dest_url: pulldown_cmark::CowStr<'_>) {
             write!(self, "\x1B]8;;{dest_url}\x1B\\");
         }
         fn end_link(&mut self) {
             write!(self, "\x1B]8;;\x1B\\");
         }
-
         fn start_style(&mut self, style: Style) {
             self.styles.push(style);
             write!(self, "{style}");
@@ -195,31 +163,22 @@ mod markdown {
         fn end_style(&mut self, style: Style) {
             let last_style = self.styles.pop();
             debug_assert_eq!(last_style.unwrap(), style);
-
             write!(self, "{Reset}");
             self.apply_styles();
         }
-
         fn reset(&mut self) {
             write!(self, "{Reset}");
         }
-
         fn apply_styles(&mut self) {
-            // Reapplying all, because anstyle doesn't support merging styles
-            // (probably because the ambiguity around colors)
-            // TODO If we decide not to support any colors, we can replace this with
-            // anstyle::Effects and remove the need for applying them all individually.
             for style in &self.styles {
                 write!(self.output, "{style}").unwrap();
             }
         }
-
         fn remove_prefix(&mut self, quote_prefix: &str) {
             debug_assert!(self.prefix.ends_with(quote_prefix));
             let new_len = self.prefix.len() - quote_prefix.len();
             self.prefix.truncate(new_len);
         }
-
         fn add_prefix(&mut self, quote_prefix: &str) {
             if self.hanging_paragraph {
                 self.hanging_paragraph = false;
@@ -228,11 +187,9 @@ mod markdown {
             self.prefix += quote_prefix;
         }
     }
-
+    #[rsubstitute::mock(base)]
     pub(super) fn parse_markdown(input: &[String]) -> (String, Option<String>) {
-        // Markdown Configuration
         let parsing_options = Options::ENABLE_STRIKETHROUGH;
-        // Minimal Styling for now, because we cannot configure it
         let style_heading = Style::new().bold().underline();
         let style_emphasis = Style::new().italic();
         let style_strong = Style::new().bold();
@@ -242,46 +199,37 @@ mod markdown {
         let list_symbol = '-';
         let quote_prefix = "| ";
         let indentation = "  ";
-
         let input = input.join("\n");
         let input = Parser::new_ext(&input, parsing_options);
-
         let mut short = None;
         let mut has_details = false;
-
         let mut writer = MarkdownWriter::default();
-
         let mut list_indices = Vec::new();
-
         for event in input {
             if short.is_some() {
                 has_details = true;
             }
             match event {
-                Event::Start(Tag::Paragraph) => { /* nothing to do */ }
+                Event::Start(Tag::Paragraph) => {}
                 Event::End(TagEnd::Paragraph) => {
                     if short.is_none() {
                         short = Some(writer.output.trim().to_owned());
                     }
                     writer.new_paragraph();
                 }
-
                 Event::Start(Tag::Heading { .. }) => writer.start_style(style_heading),
                 Event::End(TagEnd::Heading(..)) => {
                     writer.end_style(style_heading);
                     writer.new_paragraph();
                 }
-
-                Event::Start(Tag::Image { .. } | Tag::HtmlBlock) => { /* IGNORED */ }
-                Event::End(TagEnd::Image) => { /* IGNORED */ }
+                Event::Start(Tag::Image { .. } | Tag::HtmlBlock) => {}
+                Event::End(TagEnd::Image) => {}
                 Event::End(TagEnd::HtmlBlock) => writer.new_paragraph(),
-
                 Event::Start(Tag::BlockQuote(_)) => writer.add_prefix(quote_prefix),
                 Event::End(TagEnd::BlockQuote(_)) => {
                     writer.remove_prefix(quote_prefix);
                     writer.new_paragraph();
                 }
-
                 Event::Start(Tag::CodeBlock(_)) => {
                     writer.add_prefix(indentation);
                     writer.start_style(style_code);
@@ -292,7 +240,6 @@ mod markdown {
                     writer.dirty_line = false;
                     writer.hanging_paragraph = true;
                 }
-
                 Event::Start(Tag::List(list_start)) => {
                     list_indices.push(list_start);
                     writer.endline();
@@ -317,14 +264,16 @@ mod markdown {
                     writer.remove_prefix(indentation);
                     writer.endline();
                 }
-
                 Event::Start(Tag::Emphasis) => writer.start_style(style_emphasis),
                 Event::End(TagEnd::Emphasis) => writer.end_style(style_emphasis),
                 Event::Start(Tag::Strong) => writer.start_style(style_strong),
                 Event::End(TagEnd::Strong) => writer.end_style(style_strong),
-                Event::Start(Tag::Strikethrough) => writer.start_style(style_strike_through),
-                Event::End(TagEnd::Strikethrough) => writer.end_style(style_strike_through),
-
+                Event::Start(Tag::Strikethrough) => {
+                    writer.start_style(style_strike_through)
+                }
+                Event::End(TagEnd::Strikethrough) => {
+                    writer.end_style(style_strike_through)
+                }
                 Event::Start(Tag::Link { dest_url, .. }) => {
                     writer.start_link(dest_url);
                     writer.start_style(style_link);
@@ -333,11 +282,8 @@ mod markdown {
                     writer.end_link();
                     writer.end_style(style_link);
                 }
-
                 Event::Text(segment) => {
-                    // split into lines to support code blocks
                     let mut lines = segment.lines();
-                    // `.lines()`  always returns at least one
                     write!(writer, "{}", lines.next().unwrap());
                     for line in lines {
                         writer.endline();
@@ -347,27 +293,20 @@ mod markdown {
                         writer.endline();
                     }
                 }
-
                 Event::Code(code) => {
                     writer.start_style(style_code);
                     write!(writer, "{code}");
                     writer.end_style(style_code);
                 }
-
-                // There is not really anything useful to do with block level html.
                 Event::Html(html) => write!(writer, "{html}"),
-                // At some point we could support custom tags like `<red>`
                 Event::InlineHtml(html) => write!(writer, "{html}"),
                 Event::SoftBreak => write!(writer, " "),
                 Event::HardBreak => writer.endline(),
-
                 Event::Rule => {
                     writer.new_paragraph();
                     write!(writer, "---");
                     writer.new_paragraph();
                 }
-
-                // Markdown features currently not supported
                 Event::Start(
                     Tag::FootnoteDefinition(_)
                     | Tag::DefinitionList

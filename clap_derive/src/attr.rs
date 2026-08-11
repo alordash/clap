@@ -1,17 +1,14 @@
 use std::iter::FromIterator;
-
 use proc_macro2::TokenStream;
 use quote::ToTokens;
 use quote::quote;
 use syn::spanned::Spanned;
 use syn::{
-    Attribute, Expr, Ident, LitStr, Token, parenthesized,
-    parse::{Parse, ParseStream},
+    Attribute, Expr, Ident, LitStr, Token, parenthesized, parse::{Parse, ParseStream},
     punctuated::Punctuated,
 };
-
 use crate::utils::Sp;
-
+#[rsubstitute::mock]
 #[derive(Clone)]
 pub(crate) struct ClapAttr {
     pub(crate) kind: Sp<AttrKind>,
@@ -19,7 +16,7 @@ pub(crate) struct ClapAttr {
     pub(crate) magic: Option<MagicAttrName>,
     pub(crate) value: Option<AttrValue>,
 }
-
+#[rsubstitute::mock(base)]
 impl ClapAttr {
     pub(crate) fn parse_all(all_attrs: &[Attribute]) -> Result<Vec<Self>, syn::Error> {
         let mut parsed = Vec::new();
@@ -39,8 +36,8 @@ impl ClapAttr {
             } else {
                 continue;
             };
-            for mut attr in
-                attr.parse_args_with(Punctuated::<ClapAttr, Token![,]>::parse_terminated)?
+            for mut attr in attr
+                .parse_args_with(Punctuated::<ClapAttr, Token![,]>::parse_terminated)?
             {
                 attr.kind = kind;
                 parsed.push(attr);
@@ -48,49 +45,44 @@ impl ClapAttr {
         }
         Ok(parsed)
     }
-
     pub(crate) fn value_or_abort(&self) -> Result<&AttrValue, syn::Error> {
         self.value
             .as_ref()
-            .ok_or_else(|| format_err!(self.name, "attribute `{}` requires a value", self.name))
+            .ok_or_else(|| {
+                format_err!(self.name, "attribute `{}` requires a value", self.name)
+            })
     }
-
     pub(crate) fn lit_str_or_abort(&self) -> Result<&LitStr, syn::Error> {
         let value = self.value_or_abort()?;
         match value {
-            AttrValue::Expr(Expr::Lit(expr)) => match &expr.lit {
-                syn::Lit::Str(lit) => Ok(lit),
-                _ => {
-                    abort!(
-                        expr,
-                        "attribute `{}` can only accept string literals",
-                        self.name
-                    )
+            AttrValue::Expr(Expr::Lit(expr)) => {
+                match &expr.lit {
+                    syn::Lit::Str(lit) => Ok(lit),
+                    _ => {
+                        abort!(
+                            expr, "attribute `{}` can only accept string literals", self
+                            .name
+                        )
+                    }
                 }
-            },
+            }
             AttrValue::Expr(expr) => {
-                abort!(
-                    expr,
-                    "attribute `{}` can only accept string literals",
-                    self.name
-                )
+                abort!(expr, "attribute `{}` can only accept string literals", self.name)
             }
             AttrValue::Call(_) => {
                 abort!(
-                    self.name,
-                    "attribute `{}` can only accept string literals",
-                    self.name
+                    self.name, "attribute `{}` can only accept string literals", self
+                    .name
                 )
             }
         }
     }
 }
-
+#[rsubstitute::mock(base)]
 impl Parse for ClapAttr {
     fn parse(input: ParseStream<'_>) -> syn::Result<Self> {
         let name: Ident = input.parse()?;
         let name_str = name.to_string();
-
         let magic = match name_str.as_str() {
             "rename_all" => Some(MagicAttrName::RenameAll),
             "rename_all_env" => Some(MagicAttrName::RenameAllEnv),
@@ -119,29 +111,26 @@ impl Parse for ClapAttr {
             "version" => Some(MagicAttrName::Version),
             _ => None,
         };
-
         let value = if input.peek(Token![=]) {
-            // `name = value` attributes.
-            let assign_token = input.parse::<Token![=]>()?; // skip '='
+            let assign_token = input.parse::<Token![=]>()?;
             match input.parse::<Expr>() {
                 Ok(expr) => Some(AttrValue::Expr(expr)),
-
-                Err(_) => abort! {
-                    assign_token,
-                    "expected `string literal` or `expression` after `=`"
-                },
+                Err(_) => {
+                    abort! {
+                        assign_token,
+                        "expected `string literal` or `expression` after `=`"
+                    }
+                }
             }
         } else if input.peek(syn::token::Paren) {
-            // `name(...)` attributes.
             let nested;
             parenthesized!(nested in input);
-
-            let method_args: Punctuated<_, _> = nested.parse_terminated(Expr::parse, Token![,])?;
+            let method_args: Punctuated<_, _> = nested
+                .parse_terminated(Expr::parse, Token![,])?;
             Some(AttrValue::Call(Vec::from_iter(method_args)))
         } else {
             None
         };
-
         Ok(Self {
             kind: Sp::new(AttrKind::Clap, name.span()),
             name,
@@ -150,7 +139,6 @@ impl Parse for ClapAttr {
         })
     }
 }
-
 #[derive(Copy, Clone, PartialEq, Eq)]
 pub(crate) enum MagicAttrName {
     Short,
@@ -179,26 +167,23 @@ pub(crate) enum MagicAttrName {
     NextDisplayOrder,
     NextHelpHeading,
 }
-
 #[derive(Clone)]
 #[allow(clippy::large_enum_variant)]
 pub(crate) enum AttrValue {
     Expr(Expr),
     Call(Vec<Expr>),
 }
-
 impl ToTokens for AttrValue {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         match self {
             Self::Expr(t) => t.to_tokens(tokens),
             Self::Call(t) => {
-                let t = quote!(#(#t),*);
+                let t = quote!(# (# t),*);
                 t.to_tokens(tokens);
             }
         }
     }
 }
-
 #[derive(Copy, Clone, PartialEq, Eq)]
 pub(crate) enum AttrKind {
     Clap,
@@ -208,7 +193,6 @@ pub(crate) enum AttrKind {
     Arg,
     Value,
 }
-
 impl AttrKind {
     pub(crate) fn as_str(&self) -> &'static str {
         match self {
