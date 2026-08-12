@@ -37,6 +37,7 @@ heck = "0.5.0"
 pulldown-cmark = { version = "0.13.3", default-features = false, optional = true}
 anstyle = {version ="1.0.14", optional = true}
 
+[dev-dependencies]
 rsubstitute = { path = "../../rsubstitute/src/rsubstitute" }
 
 [features]

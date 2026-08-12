@@ -263,7 +263,6 @@ impl Item {
                             kind.as_str(),
                             kind.as_str()
                         ),
-                        __rs_data: Default::default(),
                     });
                     self.name = Name::Assigned(arg);
                 }
@@ -286,7 +285,6 @@ impl Item {
                                 "`#[{}(name)] was allowed by mistake, instead use `#[{}(id)]` or `#[{}(value_name)]`",
                                 kind.as_str(), kind.as_str(), kind.as_str()
                             ),
-                            __rs_data: Default::default()
                         });
                     self.name = Name::Assigned(arg);
                 }
@@ -432,7 +430,6 @@ impl Item {
                         description:
                             "`#[arg(value_parser)]` is now the default and is no longer needed`"
                                 .to_owned(),
-                        __rs_data: Default::default(),
                     });
                     self.value_parser = Some(ValueParser::Implicit(attr.name.clone()));
                 }
@@ -444,7 +441,6 @@ impl Item {
                         version: "4.0.0",
                         description: "`#[arg(action)]` is now the default and is no longer needed`"
                             .to_owned(),
-                        __rs_data: Default::default(),
                     });
                     self.action = Some(Action::Implicit(attr.name.clone()));
                 }
@@ -1121,7 +1117,6 @@ impl ToTokens for Method {
         tokens.to_tokens(ts);
     }
 }
-#[cfg_attr(test, rsubstitute::mock)]
 #[derive(Clone)]
 pub(crate) struct Deprecation {
     pub(crate) span: Span,
@@ -1129,7 +1124,6 @@ pub(crate) struct Deprecation {
     pub(crate) version: &'static str,
     pub(crate) description: String,
 }
-#[cfg_attr(test, rsubstitute::mock(base))]
 impl Deprecation {
     fn attribute(version: &'static str, old: AttrKind, new: AttrKind, span: Span) -> Self {
         Self {
@@ -1144,7 +1138,6 @@ impl Deprecation {
         }
     }
 }
-#[cfg_attr(test, rsubstitute::mock(base))]
 impl ToTokens for Deprecation {
     fn to_tokens(&self, ts: &mut TokenStream) {
         let tokens = if cfg!(feature = "deprecated") {
