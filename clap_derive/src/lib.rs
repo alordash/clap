@@ -1,7 +1,5 @@
 #![doc = include_str!("../README.md")]
-#![doc(
-    html_logo_url = "https://raw.githubusercontent.com/clap-rs/clap/master/assets/clap.png"
-)]
+#![doc(html_logo_url = "https://raw.githubusercontent.com/clap-rs/clap/master/assets/clap.png")]
 #![cfg_attr(docsrs, feature(doc_cfg))]
 #![forbid(unsafe_code)]
 #![warn(missing_docs)]
@@ -40,12 +38,14 @@ pub fn parser(input: TokenStream) -> TokenStream {
     derives::derive_parser(&input)
         .unwrap_or_else(|err| {
             let specific_dummy = match input.data {
-                Data::Struct(DataStruct { fields: Fields::Named(ref _fields), .. }) => {
-                    Some(dummies::args(&input.ident))
-                }
-                Data::Struct(DataStruct { fields: Fields::Unit, .. }) => {
-                    Some(dummies::args(&input.ident))
-                }
+                Data::Struct(DataStruct {
+                    fields: Fields::Named(ref _fields),
+                    ..
+                }) => Some(dummies::args(&input.ident)),
+                Data::Struct(DataStruct {
+                    fields: Fields::Unit,
+                    ..
+                }) => Some(dummies::args(&input.ident)),
                 Data::Enum(_) => Some(dummies::subcommand(&input.ident)),
                 _ => None,
             };

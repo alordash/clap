@@ -528,6 +528,7 @@ dependencies = [
  "backtrace",
  "clap_lex 1.1.0",
  "color-print",
+ "rsubstitute",
  "snapbox",
  "static_assertions",
  "strsim",

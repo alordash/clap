@@ -73,7 +73,7 @@ unic-emoji-char = "0.9.0"
 color-print = "0.3.7"
 snapbox = { version = "1.2.0" }
 
-rsubstitute = { path = "../../rsubstitute/src/rsubstitute" }
+rsubstitute = { path = "../../rsubstitute/rsubstitute" }
 
 [lints]
 workspace = true
