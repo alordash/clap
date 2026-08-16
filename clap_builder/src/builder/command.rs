@@ -3599,12 +3599,6 @@ impl Command {
     pub(crate) fn get_usage_name_fallback(&self) -> &str {
         self.get_usage_name().unwrap_or_else(|| self.get_bin_name_fallback())
     }
-    #[inline]
-    #[cfg(not(feature = "usage"))]
-    #[allow(dead_code)]
-    pub(crate) fn get_usage_name_fallback(&self) -> &str {
-        self.get_bin_name_fallback()
-    }
     /// Get the name of the binary.
     #[inline]
     pub fn get_display_name(&self) -> Option<&str> {
@@ -4913,7 +4907,6 @@ where
         _ => None,
     }
 }
-#[cfg_attr(test, rsubstitute::mock(base))]
 #[test]
 fn check_auto_traits() {
     static_assertions::assert_impl_all!(Command : Send, Sync, Unpin);

@@ -324,7 +324,6 @@ impl std::hash::Hash for Inner {
 #[cfg(feature = "string")]
 mod tests {
     use super::*;
-    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     #[cfg(feature = "string")]
     fn from_cow_borrowed() {
@@ -332,7 +331,6 @@ mod tests {
         let osstr = OsStr::from(cow);
         assert_eq!(osstr, OsStr::from("hello"));
     }
-    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     #[cfg(feature = "string")]
     fn from_cow_owned() {

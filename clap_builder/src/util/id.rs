@@ -154,7 +154,6 @@ impl PartialEq<Id> for String {
 #[cfg(feature = "string")]
 mod tests {
     use super::*;
-    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     #[cfg(feature = "string")]
     fn from_cow_borrowed() {
@@ -162,7 +161,6 @@ mod tests {
         let id = Id::from(cow);
         assert_eq!(id, Id::from("hello"));
     }
-    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     #[cfg(feature = "string")]
     fn from_cow_owned() {

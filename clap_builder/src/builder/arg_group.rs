@@ -526,7 +526,6 @@ impl From<&'_ ArgGroup> for ArgGroup {
 #[cfg(test)]
 mod test {
     use super::*;
-    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn groups() {
         let g = ArgGroup::new("test")
@@ -547,7 +546,6 @@ mod test {
         assert_eq!(g.requires, reqs);
         assert_eq!(g.conflicts, confs);
     }
-    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn test_from() {
         let g = ArgGroup::new("test")
@@ -569,13 +567,11 @@ mod test {
         assert_eq!(g2.requires, reqs);
         assert_eq!(g2.conflicts, confs);
     }
-    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn arg_group_send_sync() {
         fn foo<T: Send + Sync>(_: T) {}
         foo(ArgGroup::new("test"));
     }
-    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn arg_group_expose_is_multiple_helper() {
         let args: Vec<Id> = vec!["a1".into(), "a4".into()];
@@ -586,7 +582,6 @@ mod test {
             .multiple(false);
         assert!(! grp_not_multiple.is_multiple());
     }
-    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn arg_group_expose_get_args_helper() {
         let args: Vec<Id> = vec!["a1".into(), "a4".into()];

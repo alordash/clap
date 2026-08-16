@@ -4711,28 +4711,24 @@ pub trait ArgExt: Extension {}
 mod test {
     use super::Arg;
     use super::ArgAction;
-    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn flag_display_long() {
         let mut f = Arg::new("flg").long("flag").action(ArgAction::SetTrue);
         f._build();
         assert_eq!(f.to_string(), "--flag");
     }
-    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn flag_display_short() {
         let mut f2 = Arg::new("flg").short('f').action(ArgAction::SetTrue);
         f2._build();
         assert_eq!(f2.to_string(), "-f");
     }
-    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn flag_display_count() {
         let mut f2 = Arg::new("flg").long("flag").action(ArgAction::Count);
         f2._build();
         assert_eq!(f2.to_string(), "--flag...");
     }
-    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn flag_display_single_alias() {
         let mut f = Arg::new("flg")
@@ -4742,7 +4738,6 @@ mod test {
         f._build();
         assert_eq!(f.to_string(), "--flag");
     }
-    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn flag_display_multiple_aliases() {
         let mut f = Arg::new("flg").short('f').action(ArgAction::SetTrue);
@@ -4753,7 +4748,6 @@ mod test {
         f._build();
         assert_eq!(f.to_string(), "-f");
     }
-    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn flag_display_single_short_alias() {
         let mut f = Arg::new("flg").short('a').action(ArgAction::SetTrue);
@@ -4761,7 +4755,6 @@ mod test {
         f._build();
         assert_eq!(f.to_string(), "-a");
     }
-    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn flag_display_multiple_short_aliases() {
         let mut f = Arg::new("flg").short('a').action(ArgAction::SetTrue);
@@ -4769,35 +4762,30 @@ mod test {
         f._build();
         assert_eq!(f.to_string(), "-a");
     }
-    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn option_display_multiple_occurrences() {
         let mut o = Arg::new("opt").long("option").action(ArgAction::Append);
         o._build();
         assert_eq!(o.to_string(), "--option <opt>");
     }
-    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn option_display_multiple_values() {
         let mut o = Arg::new("opt").long("option").action(ArgAction::Set).num_args(1..);
         o._build();
         assert_eq!(o.to_string(), "--option <opt>...");
     }
-    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn option_display_zero_or_more_values() {
         let mut o = Arg::new("opt").long("option").action(ArgAction::Set).num_args(0..);
         o._build();
         assert_eq!(o.to_string(), "--option [<opt>...]");
     }
-    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn option_display_one_or_more_values() {
         let mut o = Arg::new("opt").long("option").action(ArgAction::Set).num_args(1..);
         o._build();
         assert_eq!(o.to_string(), "--option <opt>...");
     }
-    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn option_display_zero_or_more_values_with_value_name() {
         let mut o = Arg::new("opt")
@@ -4808,7 +4796,6 @@ mod test {
         o._build();
         assert_eq!(o.to_string(), "-o [<file>...]");
     }
-    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn option_display_one_or_more_values_with_value_name() {
         let mut o = Arg::new("opt")
@@ -4819,7 +4806,6 @@ mod test {
         o._build();
         assert_eq!(o.to_string(), "-o <file>...");
     }
-    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn option_display_optional_value() {
         let mut o = Arg::new("opt")
@@ -4829,7 +4815,6 @@ mod test {
         o._build();
         assert_eq!(o.to_string(), "--option [<opt>]");
     }
-    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn option_display_value_names() {
         let mut o = Arg::new("opt")
@@ -4839,7 +4824,6 @@ mod test {
         o._build();
         assert_eq!(o.to_string(), "-o <file> <name>");
     }
-    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn option_display3() {
         let mut o = Arg::new("opt")
@@ -4850,7 +4834,6 @@ mod test {
         o._build();
         assert_eq!(o.to_string(), "-o <file> [name]...");
     }
-    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn option_display_partially_optional_values() {
         let mut o = Arg::new("opt")
@@ -4861,7 +4844,6 @@ mod test {
         o._build();
         assert_eq!(o.to_string(), "--example <FOO> [BAR]");
     }
-    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn option_display_partially_optional_values_require_equals() {
         let mut o = Arg::new("opt")
@@ -4874,7 +4856,6 @@ mod test {
         o._build();
         assert_eq!(o.to_string(), "--example=<FOO> [BAR]");
     }
-    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn option_display_partially_optional_values_with_extra_values() {
         let mut o = Arg::new("opt")
@@ -4885,7 +4866,6 @@ mod test {
         o._build();
         assert_eq!(o.to_string(), "--example <A> [B]...");
     }
-    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn option_display_single_alias() {
         let mut o = Arg::new("opt")
@@ -4895,7 +4875,6 @@ mod test {
         o._build();
         assert_eq!(o.to_string(), "--option <opt>");
     }
-    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn option_display_multiple_aliases() {
         let mut o = Arg::new("opt")
@@ -4906,7 +4885,6 @@ mod test {
         o._build();
         assert_eq!(o.to_string(), "--option <opt>");
     }
-    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn option_display_single_short_alias() {
         let mut o = Arg::new("opt")
@@ -4916,7 +4894,6 @@ mod test {
         o._build();
         assert_eq!(o.to_string(), "-a <opt>");
     }
-    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn option_display_multiple_short_aliases() {
         let mut o = Arg::new("opt")
@@ -4927,84 +4904,72 @@ mod test {
         o._build();
         assert_eq!(o.to_string(), "-a <opt>");
     }
-    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn positional_display_multiple_values() {
         let mut p = Arg::new("pos").index(1).num_args(1..);
         p._build();
         assert_eq!(p.to_string(), "[pos]...");
     }
-    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn positional_display_multiple_values_required() {
         let mut p = Arg::new("pos").index(1).num_args(1..).required(true);
         p._build();
         assert_eq!(p.to_string(), "<pos>...");
     }
-    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn positional_display_zero_or_more_values() {
         let mut p = Arg::new("pos").index(1).num_args(0..);
         p._build();
         assert_eq!(p.to_string(), "[pos]...");
     }
-    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn positional_display_zero_or_more_values_required() {
         let mut p = Arg::new("pos").index(1).num_args(0..).required(true);
         p._build();
         assert_eq!(p.to_string(), "[pos]...");
     }
-    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn positional_display_one_or_more_values() {
         let mut p = Arg::new("pos").index(1).num_args(1..);
         p._build();
         assert_eq!(p.to_string(), "[pos]...");
     }
-    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn positional_display_one_or_more_values_required() {
         let mut p = Arg::new("pos").index(1).num_args(1..).required(true);
         p._build();
         assert_eq!(p.to_string(), "<pos>...");
     }
-    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn positional_display_optional_value() {
         let mut p = Arg::new("pos").index(1).num_args(0..=1).action(ArgAction::Set);
         p._build();
         assert_eq!(p.to_string(), "[pos]");
     }
-    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn positional_display_multiple_occurrences() {
         let mut p = Arg::new("pos").index(1).action(ArgAction::Append);
         p._build();
         assert_eq!(p.to_string(), "[pos]...");
     }
-    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn positional_display_multiple_occurrences_required() {
         let mut p = Arg::new("pos").index(1).action(ArgAction::Append).required(true);
         p._build();
         assert_eq!(p.to_string(), "<pos>...");
     }
-    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn positional_display_required() {
         let mut p = Arg::new("pos").index(1).required(true);
         p._build();
         assert_eq!(p.to_string(), "<pos>");
     }
-    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn positional_display_val_names() {
         let mut p = Arg::new("pos").index(1).value_names(["file1", "file2"]);
         p._build();
         assert_eq!(p.to_string(), "[file1] [file2]");
     }
-    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn positional_display_val_names_required() {
         let mut p = Arg::new("pos")

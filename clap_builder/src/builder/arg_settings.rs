@@ -63,13 +63,11 @@ impl ArgSettings {
 mod test {
     use super::*;
     use crate::Arg;
-    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn setting() {
         let m = Arg::new("setting").setting(ArgSettings::Required);
         assert!(m.is_required_set());
     }
-    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn unset_setting() {
         let m = Arg::new("unset_setting").setting(ArgSettings::Required);

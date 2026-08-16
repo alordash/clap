@@ -114,23 +114,6 @@ impl<'cmd, 'writer> HelpTemplate<'cmd, 'writer> {
             }
         }
     }
-    #[cfg(feature = "unstable-v5")]
-    fn term_w(cmd: &'cmd Command) -> usize {
-        let term_w = match cmd.get_term_width() {
-            Some(0) => usize::MAX,
-            Some(w) => w,
-            None => {
-                let (current_width, _h) = dimensions();
-                current_width.unwrap_or(usize::MAX)
-            }
-        };
-        let max_term_w = match cmd.get_max_term_width() {
-            Some(0) => usize::MAX,
-            Some(mw) => mw,
-            None => 100,
-        };
-        cmp::min(term_w, max_term_w)
-    }
     /// Write help to stream for the parser in the format defined by the template.
     ///
     /// For details about the template language see [`Command::help_template`].
@@ -972,7 +955,6 @@ fn should_show_subcommand(subcommand: &Command) -> bool {
 }
 #[cfg(test)]
 mod test {
-    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     #[cfg(feature = "wrap_help")]
     fn wrap_help_last_word() {
@@ -980,7 +962,6 @@ mod test {
         let help = String::from("foo bar baz");
         assert_eq!(wrap(& help, 5), "foo\nbar\nbaz");
     }
-    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     #[cfg(feature = "unicode")]
     fn display_width_handles_non_ascii() {
@@ -989,7 +970,6 @@ mod test {
         assert_eq!(display_width(text), 17);
         assert_eq!(text.len(), 20);
     }
-    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     #[cfg(feature = "unicode")]
     fn display_width_handles_emojis() {

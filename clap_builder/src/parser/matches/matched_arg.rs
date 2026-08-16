@@ -178,7 +178,6 @@ impl Eq for MatchedArg {}
 #[cfg(test)]
 mod tests {
     use super::*;
-    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn test_grouped_vals_first() {
         let mut m = MatchedArg::new_group();

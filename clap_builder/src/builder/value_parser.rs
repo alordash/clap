@@ -2528,7 +2528,6 @@ mod private {
 #[cfg(test)]
 mod test {
     use super::*;
-    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn ensure_typed_applies_to_parse() {
         fn parse(_: &str) -> Result<usize, std::io::Error> {

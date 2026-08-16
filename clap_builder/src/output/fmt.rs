@@ -51,21 +51,6 @@ impl Colorizer {
         };
         self.content.write_to(writer)
     }
-    #[cfg(not(feature = "color"))]
-    pub(crate) fn print(&self) -> std::io::Result<()> {
-        match self.stream {
-            Stream::Stdout => {
-                let stdout = std::io::stdout();
-                let mut stdout = stdout.lock();
-                self.content.write_to(&mut stdout)
-            }
-            Stream::Stderr => {
-                let stderr = std::io::stderr();
-                let mut stderr = stderr.lock();
-                self.content.write_to(&mut stderr)
-            }
-        }
-    }
 }
 #[cfg_attr(test, rsubstitute::mock(base))]
 /// Color-unaware printing. Never uses coloring.

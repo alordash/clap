@@ -1,3 +1,6 @@
+use std::ffi::OsString;
+use std::mem;
+use std::ops::Deref;
 use crate::INTERNAL_ERROR_MSG;
 use crate::builder::{Arg, ArgPredicate, Command};
 use crate::parser::Identifier;
@@ -6,9 +9,6 @@ use crate::parser::{ArgMatches, MatchedArg, SubCommand, ValueSource};
 use crate::util::AnyValue;
 use crate::util::FlatMap;
 use crate::util::Id;
-use std::ffi::OsString;
-use std::mem;
-use std::ops::Deref;
 #[cfg_attr(test, rsubstitute::mock)]
 #[derive(Debug, Default)]
 pub(crate) struct ArgMatcher {
@@ -52,15 +52,11 @@ impl ArgMatcher {
         for global_arg in global_arg_vec {
             if let Some(ma) = self.get(global_arg) {
                 let to_update = if let Some(parent_ma) = vals_map.get(global_arg) {
-                    if parent_ma.source() > ma.source() {
-                        parent_ma
-                    } else {
-                        ma
-                    }
+                    if parent_ma.source() > ma.source() { parent_ma } else { ma }
                 } else {
                     ma
                 }
-                .clone();
+                    .clone();
                 vals_map.insert(global_arg.clone(), to_update);
             }
         }
@@ -104,9 +100,7 @@ impl ArgMatcher {
         self.matches.subcommand_name()
     }
     pub(crate) fn check_explicit(&self, arg: &Id, predicate: &ArgPredicate) -> bool {
-        self.get(arg)
-            .map(|a| a.check_explicit(predicate))
-            .unwrap_or_default()
+        self.get(arg).map(|a| a.check_explicit(predicate)).unwrap_or_default()
     }
     pub(crate) fn start_custom_arg(&mut self, arg: &Arg, source: ValueSource) {
         let id = arg.get_id().clone();
@@ -128,12 +122,8 @@ impl ArgMatcher {
         debug!("ArgMatcher::start_occurrence_of_external: id={id:?}");
         let ma = self.entry(id).or_insert(MatchedArg::new_external(cmd));
         debug_assert_eq!(
-            ma.type_id(),
-            Some(
-                cmd.get_external_subcommand_value_parser()
-                    .expect(INTERNAL_ERROR_MSG)
-                    .type_id()
-            )
+            ma.type_id(), Some(cmd.get_external_subcommand_value_parser()
+            .expect(INTERNAL_ERROR_MSG).type_id())
         );
         ma.set_source(ValueSource::CommandLine);
         ma.new_val_group();
@@ -152,11 +142,7 @@ impl ArgMatcher {
             .as_ref()
             .and_then(|p| (p.id == *o.get_id()).then_some(p.raw_vals.len()))
             .unwrap_or(0);
-        debug!(
-            "ArgMatcher::needs_more_vals: o={}, pending={}",
-            o.get_id(),
-            num_pending
-        );
+        debug!("ArgMatcher::needs_more_vals: o={}, pending={}", o.get_id(), num_pending);
         let expected = o.get_num_args().expect(INTERNAL_ERROR_MSG);
         debug!("ArgMatcher::needs_more_vals: expected={expected}, actual={num_pending}");
         expected.accepts_more(num_pending)
@@ -170,13 +156,15 @@ impl ArgMatcher {
         ident: Option<Identifier>,
         trailing_values: bool,
     ) -> &mut Vec<OsString> {
-        let pending = self.pending.get_or_insert_with(|| PendingArg {
-            id: id.clone(),
-            ident,
-            raw_vals: Default::default(),
-            trailing_idx: None,
-        });
-        debug_assert_eq!(pending.id, *id, "{INTERNAL_ERROR_MSG}");
+        let pending = self
+            .pending
+            .get_or_insert_with(|| PendingArg {
+                id: id.clone(),
+                ident,
+                raw_vals: Default::default(),
+                trailing_idx: None,
+            });
+        debug_assert_eq!(pending.id, * id, "{INTERNAL_ERROR_MSG}");
         if ident.is_some() {
             debug_assert_eq!(pending.ident, ident, "{INTERNAL_ERROR_MSG}");
         }

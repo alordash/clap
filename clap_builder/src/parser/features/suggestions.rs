@@ -80,25 +80,21 @@ where
 #[cfg(all(test, feature = "suggestions"))]
 mod test {
     use super::*;
-    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn missing_letter() {
         let p_vals = ["test", "possible", "values"];
         assert_eq!(did_you_mean("tst", p_vals.iter()), vec!["test"]);
     }
-    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn ambiguous() {
         let p_vals = ["test", "temp", "possible", "values"];
         assert_eq!(did_you_mean("te", p_vals.iter()), vec!["test", "temp"]);
     }
-    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn unrelated() {
         let p_vals = ["test", "possible", "values"];
         assert_eq!(did_you_mean("hahaahahah", p_vals.iter()), Vec::< String >::new());
     }
-    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn best_fit() {
         let p_vals = ["test", "possible", "values", "alignmentStart", "alignmentScore"];
@@ -107,7 +103,6 @@ mod test {
             "alignmentScore"]
         );
     }
-    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn best_fit_long_common_prefix_issue_4660() {
         let p_vals = ["alignmentScore", "alignmentStart"];
@@ -116,7 +111,6 @@ mod test {
             "alignmentScore"]
         );
     }
-    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn flag_missing_letter() {
         let p_vals = ["test", "possible", "values"];
@@ -125,7 +119,6 @@ mod test {
             None))
         );
     }
-    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn flag_ambiguous() {
         let p_vals = ["test", "temp", "possible", "values"];
@@ -134,13 +127,11 @@ mod test {
             None))
         );
     }
-    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn flag_unrelated() {
         let p_vals = ["test", "possible", "values"];
         assert_eq!(did_you_mean_flag("hahaahahah", & [], p_vals.iter(), []), None);
     }
-    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn flag_best_fit() {
         let p_vals = ["test", "possible", "values", "alignmentStart", "alignmentScore"];

@@ -104,14 +104,12 @@ impl<'a, A: ?Sized + 'static> From<&'a A> for AnyValueId {
 }
 #[cfg(test)]
 mod test {
-    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     #[cfg(debug_assertions)]
     fn debug_impl() {
         use super::*;
         assert_eq!(format!("{:?}", AnyValue::new(5)), "AnyValue { inner: i32 }");
     }
-    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn eq_to_type_id() {
         use super::*;

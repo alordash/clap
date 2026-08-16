@@ -198,7 +198,6 @@ impl std::fmt::Debug for ValueRange {
 mod test {
     use super::*;
     use std::ops::RangeBounds;
-    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn from_fixed() {
         let range: ValueRange = 5.into();
@@ -209,7 +208,6 @@ mod test {
         assert_eq!(range.num_values(), Some(5));
         assert!(range.takes_values());
     }
-    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn from_fixed_empty() {
         let range: ValueRange = 0.into();
@@ -220,7 +218,6 @@ mod test {
         assert_eq!(range.num_values(), Some(0));
         assert!(! range.takes_values());
     }
-    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn from_range() {
         let range: ValueRange = (5..10).into();
@@ -231,7 +228,6 @@ mod test {
         assert_eq!(range.num_values(), None);
         assert!(range.takes_values());
     }
-    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn from_range_inclusive() {
         let range: ValueRange = (5..=10).into();
@@ -242,7 +238,6 @@ mod test {
         assert_eq!(range.num_values(), None);
         assert!(range.takes_values());
     }
-    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn from_range_full() {
         let range: ValueRange = (..).into();
@@ -253,7 +248,6 @@ mod test {
         assert_eq!(range.num_values(), None);
         assert!(range.takes_values());
     }
-    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn from_range_from() {
         let range: ValueRange = (5..).into();
@@ -264,7 +258,6 @@ mod test {
         assert_eq!(range.num_values(), None);
         assert!(range.takes_values());
     }
-    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn from_range_to() {
         let range: ValueRange = (..10).into();
@@ -275,7 +268,6 @@ mod test {
         assert_eq!(range.num_values(), None);
         assert!(range.takes_values());
     }
-    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn from_range_to_inclusive() {
         let range: ValueRange = (..=10).into();

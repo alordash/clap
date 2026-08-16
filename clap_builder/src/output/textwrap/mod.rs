@@ -37,17 +37,14 @@ mod test {
             .map(|s| s.to_owned())
             .collect::<Vec<_>>()
     }
-    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn no_wrap() {
         assert_eq!(wrap("foo", 10), vec!["foo"]);
     }
-    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn wrap_simple() {
         assert_eq!(wrap("foo bar baz", 5), vec!["foo", "bar", "baz"]);
     }
-    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn to_be_or_not() {
         assert_eq!(
@@ -55,22 +52,18 @@ mod test {
             "not to be,", "that is", "the", "question."]
         );
     }
-    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn multiple_words_on_first_line() {
         assert_eq!(wrap("foo bar baz", 10), vec!["foo bar", "baz"]);
     }
-    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn long_word() {
         assert_eq!(wrap("foo", 0), vec!["foo"]);
     }
-    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn long_words() {
         assert_eq!(wrap("foo bar", 0), vec!["foo", "bar"]);
     }
-    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn max_width() {
         assert_eq!(wrap("foo bar", usize::MAX), vec!["foo bar"]);
@@ -78,29 +71,24 @@ mod test {
                     It should not be wrapped given the extents below.";
         assert_eq!(wrap(text, usize::MAX), vec![text]);
     }
-    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn leading_whitespace() {
         assert_eq!(wrap("  foo bar", 6), vec!["  foo", "  bar"]);
     }
-    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn leading_whitespace_empty_first_line() {
         assert_eq!(wrap(" foobar baz", 6), vec![" foobar", " baz"]);
     }
-    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn trailing_whitespace() {
         assert_eq!(wrap("foo     bar     baz  ", 5), vec!["foo", "bar", "baz"]);
     }
-    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn issue_99() {
         assert_eq!(
             wrap("aaabbbccc x yyyzzzwww", 9), vec!["aaabbbccc", "x", "yyyzzzwww"]
         );
     }
-    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn issue_129() {
         assert_eq!(wrap("x – x", 1), vec!["x", "–", "x"]);

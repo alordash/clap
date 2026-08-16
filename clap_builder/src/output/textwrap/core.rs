@@ -85,7 +85,6 @@ mod tests {
     use super::*;
     #[cfg(feature = "unicode")]
     use unicode_width::UnicodeWidthChar;
-    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn emojis_have_correct_width() {
         use unic_emoji_char::is_emoji;
@@ -108,26 +107,22 @@ mod tests {
             }
         }
     }
-    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     #[cfg(feature = "unicode")]
     fn display_width_works() {
         assert_eq!("Café Plain".len(), 11);
         assert_eq!(display_width("Café Plain"), 10);
     }
-    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     #[cfg(feature = "unicode")]
     fn display_width_narrow_emojis() {
         assert_eq!(display_width("⁉"), 1);
     }
-    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     #[cfg(feature = "unicode")]
     fn display_width_narrow_emojis_variant_selector() {
         assert_eq!(display_width("⁉\u{fe0f}"), 1);
     }
-    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     #[cfg(feature = "unicode")]
     fn display_width_emojis() {

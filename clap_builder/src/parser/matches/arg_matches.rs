@@ -1846,31 +1846,26 @@ fn unwrap_downcast_into<T: Any + Clone + Send + Sync + 'static>(value: AnyValue)
 mod tests {
     use super::*;
     use crate::ArgAction;
-    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn check_auto_traits() {
         static_assertions::assert_impl_all!(ArgMatches : Send, Sync, Unpin);
     }
-    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn test_default_raw_values() {
         let mut values: RawValues<'_> = Default::default();
         assert_eq!(values.next(), None);
     }
-    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn test_default_indices() {
         let mut indices: Indices<'_> = Indices::default();
         assert_eq!(indices.next(), None);
     }
-    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn test_default_indices_with_shorter_lifetime() {
         let matches = ArgMatches::default();
         let mut indices = matches.indices_of("").unwrap_or_default();
         assert_eq!(indices.next(), None);
     }
-    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn values_exact_size() {
         let l = crate::Command::new("test")
@@ -1887,7 +1882,6 @@ mod tests {
             .count();
         assert_eq!(l, 1);
     }
-    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn os_values_exact_size() {
         let l = crate::Command::new("test")
@@ -1905,7 +1899,6 @@ mod tests {
             .count();
         assert_eq!(l, 1);
     }
-    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn indices_exact_size() {
         let l = crate::Command::new("test")
@@ -1922,7 +1915,6 @@ mod tests {
             .len();
         assert_eq!(l, 1);
     }
-    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn rev_iter() {
         let mut matches = crate::Command::new("myprog")
@@ -1949,7 +1941,6 @@ mod tests {
         let b = b_index.into_iter().zip(b_value).rev().collect::<Vec<_>>();
         dbg!(b);
     }
-    #[cfg_attr(test, rsubstitute::mock(base))]
     #[test]
     fn delete_id_without_returning() {
         let mut matches = crate::Command::new("myprog")
