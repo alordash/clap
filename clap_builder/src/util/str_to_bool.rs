@@ -2,7 +2,6 @@
 pub(crate) const TRUE_LITERALS: [&str; 6] = ["y", "yes", "t", "true", "on", "1"];
 /// False values are `n`, `no`, `f`, `false`, `off`, and `0`.
 pub(crate) const FALSE_LITERALS: [&str; 6] = ["n", "no", "f", "false", "off", "0"];
-#[cfg_attr(test, rsubstitute::mock(base))]
 /// Converts a string literal representation of truth to true or false.
 ///
 /// `false` values are `n`, `no`, `f`, `false`, `off`, and `0` (case insensitive).

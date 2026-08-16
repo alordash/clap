@@ -192,7 +192,6 @@ impl PartialEq<std::ffi::OsStr> for Str {
         PartialEq::eq(self.as_str(), other)
     }
 }
-#[cfg_attr(test, rsubstitute::mock(base))]
 impl PartialEq<Str> for std::ffi::OsStr {
     #[inline]
     fn eq(&self, other: &Str) -> bool {
