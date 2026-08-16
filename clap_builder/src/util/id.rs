@@ -60,7 +60,6 @@ impl From<&'_ &'static str> for Id {
         Self(name.into())
     }
 }
-#[cfg_attr(test, rsubstitute::mock(base))]
 impl From<Id> for Str {
     fn from(name: Id) -> Self {
         name.0
@@ -131,7 +130,6 @@ impl PartialEq<Str> for Id {
         PartialEq::eq(self.as_str(), other.as_str())
     }
 }
-#[cfg_attr(test, rsubstitute::mock(base))]
 impl PartialEq<Id> for Str {
     #[inline]
     fn eq(&self, other: &Id) -> bool {
