@@ -920,7 +920,9 @@ impl Arg {
         self.settings.unset(setting);
         self
     }
-    /// Extend [`Arg`] with [`ArgExt`] data
+}
+impl Arg {
+/// Extend [`Arg`] with [`ArgExt`] data
     #[cfg(feature = "unstable-ext")]
     #[allow(clippy::should_implement_trait)]
     pub fn add<T: ArgExt + Extension>(mut self, tagged: T) -> Self {
