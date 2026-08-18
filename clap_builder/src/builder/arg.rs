@@ -87,7 +87,7 @@ pub struct Arg {
     pub(crate) help_heading: Option<Option<Str>>,
     pub(crate) ext: Extensions,
 }
-#[cfg_attr(test, rsubstitute::mock(base))]
+
 /// # Basic API
 impl Arg {
     /// Create a new [`Arg`] with a unique name.
@@ -4472,6 +4472,8 @@ impl Arg {
     pub fn is_ignore_case_set(&self) -> bool {
         self.is_set(ArgSettings::IgnoreCase)
     }
+}
+impl Arg {
     /// Access an [`ArgExt`]
     #[cfg(feature = "unstable-ext")]
     pub fn get<T: ArgExt + Extension>(&self) -> Option<&T> {
