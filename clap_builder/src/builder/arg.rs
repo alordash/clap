@@ -968,6 +968,9 @@ impl Arg {
         self.action = action.into_resettable().into_option();
         self
     }
+}
+#[cfg_attr(test, rsubstitute::mock)]
+impl Arg {
     /// Specify the typed behavior of the argument.
     ///
     /// This allows parsing and validating a value before storing it into
@@ -1192,6 +1195,8 @@ impl Arg {
         self.num_vals = qty.into_resettable().into_option();
         self
     }
+}
+impl Arg {
     #[doc(hidden)]
     #[cfg_attr(
         feature = "deprecated",
@@ -1200,6 +1205,9 @@ impl Arg {
     pub fn number_of_values(self, qty: usize) -> Self {
         self.num_args(qty)
     }
+}
+#[cfg_attr(test, rsubstitute::mock)]
+impl Arg {
     /// Placeholder for the argument's value in the help message / usage.
     ///
     /// This name is cosmetic only; the name is **not** used to access arguments.
@@ -4181,15 +4189,21 @@ impl Arg {
             Some(self.short_aliases.iter().map(|(s, _)| s).copied().collect())
         }
     }
+}
+#[cfg_attr(test, rsubstitute::mock)]
+impl Arg {
     /// Get the short option name and its visible aliases, if any
     #[inline]
     pub fn get_short_and_visible_aliases(&self) -> Option<Vec<char>> {
-        let mut shorts = vec![self.short ?];
+        let mut shorts = vec![self.short?];
         if let Some(aliases) = self.get_visible_short_aliases() {
             shorts.extend(aliases);
         }
         Some(shorts)
     }
+}
+#[cfg_attr(test, rsubstitute::mock(base))]
+impl Arg {
     /// Get the long option name for this argument, if any
     #[inline]
     pub fn get_long(&self) -> Option<&str> {
@@ -4219,6 +4233,9 @@ impl Arg {
             Some(self.aliases.iter().map(|(s, _)| s.as_str()).collect())
         }
     }
+}
+#[cfg_attr(test, rsubstitute::mock)]
+impl Arg {
     /// Get the long option name and its visible aliases, if any
     #[inline]
     pub fn get_long_and_visible_aliases(&self) -> Option<Vec<&str>> {
@@ -4228,6 +4245,9 @@ impl Arg {
         }
         Some(longs)
     }
+}
+#[cfg_attr(test, rsubstitute::mock(base))]
+impl Arg {
     /// Get hidden aliases for this argument, if any
     #[inline]
     pub fn get_aliases(&self) -> Option<Vec<&str>> {
